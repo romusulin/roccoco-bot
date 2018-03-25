@@ -1,0 +1,12 @@
+{
+  "name": "roko",
+  "version": "1.0.0",
+  "description": "Bot za bolje sutra.",
+  "main": "bot.js",
+  "author": "romusulin",
+  "dependencies": {
+    "discord.js": "^11.3.2",
+    "ffmpeg": "0.0.4",
+    "lodash": "^4.17.5"
+  }
+}
