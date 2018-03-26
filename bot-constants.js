@@ -4,7 +4,11 @@
         PING: "ping",
         PLAY: "play",
         JOIN: "join",
-        LEAVE: "leave"
+        LEAVE: "leave",
+        SKIP: "skip",
+        QUEUE: "queue",
+        CHANNEL_TYPE_VOICE: "voice",
+        CHANNEL_TYPE_TEXT: "text"
     };
     module.exports = constants;
 })();

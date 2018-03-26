@@ -12,12 +12,15 @@
 
     /* PUBLIC METHODS*/
     var checkPrefix = function(sourceMsg) {
-        var retObj = { status: false, prefix: "" };
+        var retObj = { status: false, prefix: "", args: "", cmd: ""};
 
         _.each(AVAILABLE_PREFIXES, function(prefix) {
             if (sourceMsg.startsWith(prefix)) { 
+                var allArgs = sourceMsg.substring(prefix.length).split(" ");
                 retObj.status = true;
                 retObj.prefix = prefix;
+                retObj.cmd = allArgs[0];
+                retObj.args = allArgs.splice(1);
             }
         });
     
@@ -31,7 +34,7 @@
 
         if (noOfArgs === 1) {
             if (cmd === ARGUMENTS.LIST) {
-                return { status: true, body: "Senpai onii-chan master, here are all the available prefixes: " + AVAILABLE_PREFIXES.join(", ") };
+                return { status: true, body: "Here are all the available prefixes: " + AVAILABLE_PREFIXES.join(", ") };
             } else {
                 return { status: false, body: FORMAT };
             }
@@ -54,7 +57,7 @@
             return prefix === pfx;
         });
         if (isSuccesfullRemoval) {
-            return { status: true, body: "Your call did not go unnoticed. \"" + prefix + "\" is removed from available prefixes, senpai master." };
+            return { status: true, body: "Your call did not go unnoticed. \"" + prefix + "\" is removed from available prefixes." };
         } else {
             return { status: true, body: "\"" + prefix + "\" could not be found in available prefixes." };
         }

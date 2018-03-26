@@ -1,30 +1,29 @@
+// Libs
 var Discord = require("discord.js");
 var auth = require("./auth.json");
 var _ = require("lodash");
 
+// Imports
 var Constants = require("./bot-constants.js");
 var PrefixManager = require("./bot-prefix.js");
 var MusicManager = require("./bot-music.js");
 
-
+// Didscord client
 const client = new Discord.Client();
 client.login(auth.token);
-
 client.on("ready", () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });
 
 client.on("message", msg => {
     var message = msg.content;
-    var checkObj = PrefixManager.checkPrefix(message);
-    if (!checkObj.status) {
+    var argObj = PrefixManager.checkPrefix(message);
+    if (!argObj.status) {
         return;
     }
 
-    var allArgs = message.substring(checkObj.prefix.length).split(" ");
-    var cmd = allArgs[0];
-
-    var args = allArgs.splice(1);
+    var cmd = argObj.cmd;
+    var args = argObj.args;
     
     if (cmd === Constants.PING) {
         msg.reply("nemoj biti dugetantan");
@@ -37,11 +36,15 @@ client.on("message", msg => {
             msg.reply(response.body);
         }
     } else if (cmd === Constants.JOIN) {
-        console.log(args);
-        var voiceChannel = client.channels.find('name', args[0]);
-        return voiceChannel.join();
+        return msg.channel.send(MusicManager.init(client, msg));
     } else if (cmd === Constants.LEAVE) {
-        var voiceChannel = client.channels.find('name', args[0]);
-        return voiceChannel.leave();
+        return msg.channel.send( MusicManager.leave());
+    } else if (cmd === Constants.PLAY) {
+        MusicManager.play(args.join(" "));
+    } else if (cmd === Constants.SKIP) {
+        MusicManager.skip();
+    } else if (cmd === Constants.QUEUE) {
+        MusicManager.showQueue();
     }
 });
+
