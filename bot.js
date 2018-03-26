@@ -51,6 +51,8 @@ client.on("message", msg => {
         MusicManager.nowPlaying();
     } else if (cmd === Constants.CLEAR_QUEUE) {
         MusicManager.clearQueue();
+    } else if (cmd === Constants.AUTOPLAY) {
+        MusicManager.autoPlay(argObj);
     }
 });
 

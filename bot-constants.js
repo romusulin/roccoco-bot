@@ -14,7 +14,8 @@
         SHUT_DOWN: "shutdown",
         GAME: "game",
         NOW_PLAYING: "np",
-        CLEAR_QUEUE: "cl"
+        CLEAR_QUEUE: "cl",
+        AUTOPLAY: "autoplay"
     };
     module.exports = constants;
 })();

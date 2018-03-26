@@ -11,15 +11,15 @@
 
     // Vars
     var voiceChannel = null;
-    var reqestedInfo = {};
+    var requestedInfo = {};
     var isCurrentlyPlaying = false;
     var ytAudioQueue = [];
     var nowPlaying;
     var dispatcher;
-
+    var isAutoPlayOn = false;
     /* PUBLIC METHODS */
     var init = function(argObj) {
-        reqestedInfo = {userId: argObj.authorId, channel: argObj.channel};
+        requestedInfo = {userId: argObj.authorId, channel: argObj.channel};
         let vc = getSenderVoiceChannel(argObj.authorId);
         if (voiceChannel && voiceChannel.name === vc.name) {
             return "I'm already in that channel.";
@@ -65,7 +65,7 @@
         _.each(ytAudioQueue, function(elem) {
             queueString += "\n" + ++no + ". " +  elem.snippet.title;
         });
-        reqestedInfo.channel.send(queueString);
+        requestedInfo.channel.send(queueString);
         return queueString;
     };
 
@@ -84,7 +84,7 @@
     };
 
     var nowPlaying = function() {
-        reqestedInfo.channel.send(
+        requestedInfo.channel.send(
             "Now playing:"
             + "\nTitle: " + nowPlaying.snippet.title
             + "\nDescription: " + nowPlaying.snippet.description
@@ -93,7 +93,14 @@
 
     var clearQueue = function() {
         ytAudioQueue = [];
-        return reqestedInfo.channel.send("Queue cleared.");
+        return requestedInfo.channel.send("Queue cleared.");
+    }
+
+    var autoPlay = function(argObj) {
+        isAutoPlayOn = true;
+        searchYoutube(argObj.args, function() {
+            playStream(ytAudioQueue);
+        });
     }
 
     /* PRIVATE METHODS */
@@ -104,31 +111,78 @@
         });
     };
 
-    function searchYoutube(searchKeywords, callback) {
-        var requestUrl = 'https://www.googleapis.com/youtube/v3/search' + `?part=snippet&q=${escape(searchKeywords)}&key=${auth.youtube_api_key}`;
+    function getVideoObjectFromKeyword(kw, callback) {
+        if (!kw.match("youtube.com|youtu.be|https")) {
+            searchYoutube(kw, function(retObj) {
+                console.debug(retObj);
+                callback(retObj);
+            });
+        }
+        
+    };
 
+    function searchYoutubeAutoplay(videoId, callback) {
+        var requestUrl = "https://www.googleapis.com/youtube/v3/search" + `?part=snippet&relatedToVideoId=${videoId}&type=video&key=${auth.youtube_api_key}`;
         request(requestUrl, (error, response) => {
             if (!error && response.statusCode == 200) {
                 let body = response.body;
+                var retObj = {id: "", snippet: {}};
                 if (body.items.length === 0) {
-                    return reqestedInfo.channel.send("Query returned 0 results.");
+                    return requestedInfo.channel.send("Query returned 0 results.");
                 }
 
                 let item = body.items[0];
                 if (item.id.kind === 'youtube#video') {
                     console.log("Added " + item.snippet.title + " to queue.");
-                    ytAudioQueue.push({id: item.id.videoId, snippet: item.snippet});
-                    reqestedInfo.channel.send("Pushed " + item.snippet.title + " to queue.");
+                    retObj.id = item.id.videoId;
+                    retObj.snippet = item.snippet;
+                    ytAudioQueue.push(retObj);
+                    if (!isAutoPlayOn) requestedInfo.channel.send("Pushed " + item.snippet.title + " to queue.");
                     
                 }
             } else {
                 console.log("Unexpected error when searching YouTube");
                 return;
             }
-            callback();
-            return;
+    
+            if (typeof callback === "function") {
+                callback(retObj);
+            }
         });
-        return;
+    }
+
+
+    function searchYoutube(searchKeywords, callback) {
+        var requestUrl = 'https://www.googleapis.com/youtube/v3/search' + `?part=snippet&q=${escape(searchKeywords)}&key=${auth.youtube_api_key}`;
+        var retObj = {id: "", snippet: {} };
+
+        request(requestUrl, (error, response) => {
+            if (!error && response.statusCode == 200) {
+                let body = response.body;
+                if (body.items.length === 0) {
+                    return requestedInfo.channel.send("Query returned 0 results.");
+                }
+
+                let item = body.items[0];
+                if (item.id.kind === 'youtube#video') {
+                    console.log("Added " + item.snippet.title + " to queue.");
+                    retObj.id = item.id.videoId;
+                    retObj.snippet = item.snippet;
+                    ytAudioQueue.push(retObj);
+                    if (!isAutoPlayOn) requestedInfo.channel.send("Pushed " + item.snippet.title + " to queue.");
+                    
+                }
+            } else {
+                console.log("Unexpected error when searching YouTube");
+                return;
+            }
+    
+            if (typeof callback === "function") {
+                console.log(retObj);
+                callback(retObj);
+            }
+        });
+        return retObj;
     };
 
     function playStream(queue) {
@@ -144,8 +198,8 @@
             return;
         }
 
-        if (queue.length === 0) {
-            reqestedInfo.channel.send("Queue is empty.");
+        if (queue.length === 0 && requestedInfo !== undefined) {
+            requestedInfo.channel.send("<@" + requestedInfo.userId + "> Queue is empty.");
             return;
         }
 
@@ -160,7 +214,7 @@
 
         const stream = ytdl(streamUrl, { filter: 'audioonly' });
         dispatcher = client.voiceConnections.first()
-            .playStream(stream, { seek: 0, volume: 1 })
+            .playStream(stream, { seek: 0, volume: 0.05 })
             .on('start', () => {
                 console.log("--> Dispatcher started speaking.")
             })
@@ -173,9 +227,17 @@
             })
             .on('end', (reason) => {
                 isCurrentlyPlaying = false;
-                console.log("--> Dispatcher ended:" + reason);
-                playStream(ytAudioQueue);
-                return;       
+                if (isAutoPlayOn === false) {
+                    console.log("--> Dispatcher ended:" + reason);
+                    playStream(ytAudioQueue);
+                    return;   
+                } else {
+                    searchYoutubeAutoplay(nowPlaying.id, function() {
+                        playStream(ytAudioQueue);
+                    });
+
+                }
+                    
             })
             .on('error', (e) => {
                 console.log("--> Dispatcher encountered error: " + e);
@@ -184,7 +246,7 @@
         console.log("Streaming audio from " + streamUrl + " (" + snippet.title + ")");
 
         isCurrentlyPlaying = true;
-        reqestedInfo.channel.send(
+        requestedInfo.channel.send(
             "Playing: " + snippet.title 
             + "\nChannel: " + snippet.channelTitle
         );
@@ -200,7 +262,8 @@
         pause: resume,
         resume: resume,
         nowPlaying: nowPlaying,
-        clearQueue: clearQueue
+        clearQueue: clearQueue,
+        autoPlay: autoPlay
     };
     module.exports = music_module;
 })();
