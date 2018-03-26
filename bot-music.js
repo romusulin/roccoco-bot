@@ -109,6 +109,16 @@
         });
     }
 
+    var showPlayedHistory = function() {
+        let queueString = "Full history:";
+        let no = 0;
+        _.each(ytAudioHistory, function(elem) {
+            queueString += "\n" + ++no + ". " +  elem.snippet.title;
+        });
+        requestedInfo.channel.send(queueString);
+        return queueString;
+    }
+
     /* PRIVATE METHODS */
     function getSenderVoiceChannel(authorId) {
         return client.channels.find(x => { 
@@ -128,6 +138,7 @@
                 }
 
                 var item;
+                console.log(body.items.length + " related items found.")
                 for (i = 0; i < body.items.length; i++) {
                       if (shouldPlayThisSong(body.items[i])) {
                           item = body.items[i];
@@ -135,7 +146,7 @@
                       }
                 }
     
-                console.log(item);
+                //console.log(item);
                 if (item.id.kind === 'youtube#video') {
                     console.log("Added " + item.snippet.title + " to queue.");
                     retObj.id = item.id.videoId;
@@ -159,15 +170,12 @@
     function shouldPlayThisSong(item) {
         let retVal = true;
 
-        _.each(ytAudioHistory, function(ytElem) {
+        // Gets n last elements of yt audio history to check
+        _.each(ytAudioHistory.slice(Constants.CHECKED_HISTORY_SIZE * -1), function(ytElem) {
             if(item.id.videoId === ytElem.id) {
                 retVal = false;
             }
         });
-
-        if (ytAudioHistory.length > Constants.MUSIC_HISTORY_SIZE) {
-            ytAudioHistory.shift();
-        }
 
         return retVal;
     };
@@ -283,7 +291,8 @@
         resume: resume,
         nowPlaying: nowPlaying,
         clearQueue: clearQueue,
-        autoPlay: autoPlay
+        autoPlay: autoPlay,
+        showPlayedHistory: showPlayedHistory
     };
     module.exports = music_module;
 })();

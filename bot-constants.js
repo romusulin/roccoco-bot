@@ -16,7 +16,8 @@
         NOW_PLAYING: "np",
         CLEAR_QUEUE: "cl",
         AUTOPLAY: "autoplay",
-        MUSIC_HISTORY_SIZE: 15
+        CHECKED_HISTORY_SIZE: 15,
+        SHOW_PLAYED_HISTORY: "playedhistory"
     };
     module.exports = constants;
 })();
