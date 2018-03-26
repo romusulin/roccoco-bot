@@ -1,29 +1,25 @@
 (function() {
+    // Libs
     var _ = require("lodash");
     var ytdl = require('ytdl-core');
     var request = require('superagent');
 
-
+    //Imports
     var Constants = require("./bot-constants.js");
     var auth = require("./auth.json");
-    var client;
+
+
+    // Vars
     var voiceChannel = null;
     var reqestedInfo = {};
-
     var isCurrentlyPlaying = false;
     var ytAudioQueue = [];
     var dispatcher;
+
     /* PUBLIC METHODS */
-
-
-    var init = function(dcClient, msg) {
-        reqestedInfo = {userId: msg.author.id, channel: msg.channel};
-        client = dcClient;
-        var vc = client.channels.find(x => { 
-            return x['members'].keyArray().includes(String(msg.author.id)) > 0 
-            && x.type === Constants.CHANNEL_TYPE_VOICE; 
-        });
-
+    var init = function(argObj) {
+        reqestedInfo = {userId: argObj.authorId, channel: argObj.channel};
+        let vc = getSenderVoiceChannel(argObj.authorId);
         if (voiceChannel && voiceChannel.name === vc.name) {
             return "I'm already in that channel.";
         }
@@ -47,12 +43,14 @@
             return "Left voice channel: " + vcName + ".";
         } else {
             return "I'm not in a channel.";
-        }
-        
+        }  
     }
 
-    var play = function(args) {
-        searchYoutube(args, function() { playStream(ytAudioQueue) });   
+    var play = function(argObj) {
+        if (!voiceChannel) {
+            init(argObj);
+        }
+        searchYoutube(argObj.args, function() { playStream(ytAudioQueue) });   
     };
 
     var skip = function() {
@@ -70,7 +68,28 @@
         return queueString;
     };
 
+    var resume = function() {
+        //TODO
+        if (dispatcher) {
+            dispatcher.resume();
+        }
+    };
+
+    var pause = function() {
+        //TODO
+        if (dispatcher) {
+            dispatcher.pause();
+        }
+    };
+
     /* PRIVATE METHODS */
+    function getSenderVoiceChannel(authorId) {
+        return client.channels.find(x => { 
+            return x['members'].keyArray().includes(String(authorId))
+            && x.type === Constants.CHANNEL_TYPE_VOICE; 
+        });
+    };
+
     function searchYoutube(searchKeywords, callback) {
         var requestUrl = 'https://www.googleapis.com/youtube/v3/search' + `?part=snippet&q=${escape(searchKeywords)}&key=${auth.youtube_api_key}`;
 
@@ -88,19 +107,18 @@
                     reqestedInfo.channel.send("Pushed " + item.snippet.title + " to queue.");
                     callback();
                     return;
-                    
                 }
             } else {
                 console.log("Unexpected error when searching YouTube");
-                return null;
+                return;
             }
         });
-        return null;
+        return;
     };
 
     function playStream(queue) {
         playStream(queue, false);
-    }
+    };
 
     function playStream(queue, isSkipInitiated) {
         if (isSkipInitiated) {
@@ -116,7 +134,7 @@
             return;
         }
 
-        let audioQueueElement = queue.pop();
+        let audioQueueElement = queue.shift();
         let streamUrl = audioQueueElement.id;
         let snippet = audioQueueElement.snippet;
 
@@ -127,9 +145,11 @@
         const stream = ytdl(streamUrl, { filter: 'audioonly' });
         dispatcher = client.voiceConnections.first()
             .playStream(stream, { seek: 0, volume: 1 })
+            .on('start', () => {
+                console.log("--> Dispatcher started speaking.")
+            })
             .on('speaking', (isSpeaking) => {
                 if (!isSpeaking) {
-                    console.log("Dispatcher ended speaking. Queue:" + showQueue());
                     isCurrentlyPlaying = false;
                     dispatcher.end();
                     return;
@@ -137,9 +157,12 @@
             })
             .on('end', (reason) => {
                 isCurrentlyPlaying = false;
-                console.log("Dispatcher ended." + reason);
+                console.log("--> Dispatcher ended:" + reason);
                 playStream(ytAudioQueue);
                 return;       
+            })
+            .on('error', (e) => {
+                console.log("--> Dispatcher encountered error: " + e);
             });
 
         console.log("Streaming audio from " + streamUrl + " (" + snippet.title + ")");
@@ -149,7 +172,6 @@
             "Playing: " + snippet.title 
             + "\nChannel: " + snippet.channelTitle
         );
-        
     };
 
     /* EXPORTS */
@@ -158,7 +180,9 @@
         leave: leave,
         play: play,
         skip: skip,
-        showQueue: showQueue
+        showQueue: showQueue,
+        pause: resume,
+        resume: resume
     };
     module.exports = music_module;
 })();

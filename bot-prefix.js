@@ -11,9 +11,9 @@
     var AVAILABLE_PREFIXES = ["!"];
 
     /* PUBLIC METHODS*/
-    var checkPrefix = function(sourceMsg) {
-        var retObj = { status: false, prefix: "", args: "", cmd: ""};
-
+    var checkPrefix = function(msg) {
+        let sourceMsg = msg.content;
+        var retObj = { status: false, prefix: "", args: "", cmd: "", channel:{}, authorId:""};
         _.each(AVAILABLE_PREFIXES, function(prefix) {
             if (sourceMsg.startsWith(prefix)) { 
                 var allArgs = sourceMsg.substring(prefix.length).split(" ");
@@ -21,9 +21,11 @@
                 retObj.prefix = prefix;
                 retObj.cmd = allArgs[0];
                 retObj.args = allArgs.splice(1);
+                retObj.channel = msg.channel;
+                retObj.authorId = msg.author.id;
             }
         });
-    
+
         return retObj;
     };
 
@@ -32,21 +34,20 @@
         var cmd = args[0];
         var arg = args[1];
 
+        
         if (noOfArgs === 1) {
             if (cmd === ARGUMENTS.LIST) {
-                return { status: true, body: "Here are all the available prefixes: " + AVAILABLE_PREFIXES.join(", ") };
-            } else {
-                return { status: false, body: FORMAT };
+                return "Here are all the available prefixes: " + AVAILABLE_PREFIXES.join(", ");
             }
         } else if (noOfArgs === 2) {
             if (cmd === ARGUMENTS.ADD) {
                 return addPrefix(arg);
             } else if (cmd === ARGUMENTS.REMOVE) {
                 return removePrefix(arg);
-            } else {
-                return { status: false, body: FORMAT };
-            }      
+            }     
         }
+
+        return FORMAT;
     };
 
     /* PRIVATE METHODS */
@@ -57,19 +58,19 @@
             return prefix === pfx;
         });
         if (isSuccesfullRemoval) {
-            return { status: true, body: "Your call did not go unnoticed. \"" + prefix + "\" is removed from available prefixes." };
+            return "Your call did not go unnoticed. \"" + prefix + "\" is removed from available prefixes.";
         } else {
-            return { status: true, body: "\"" + prefix + "\" could not be found in available prefixes." };
+            return "\"" + prefix + "\" could not be found in available prefixes.";
         }
            
     };
 
     var addPrefix = function(prefix) {
         if (_.includes(AVAILABLE_PREFIXES, prefix)) {
-            return { status: true, body: "\"" + prefix + "\" is already added in available prefixes." };
+            return "\"" + prefix + "\" is already added in available prefixes.";
         } else {
             AVAILABLE_PREFIXES.push(prefix);
-            return { status: true, body: "Your call did not go unnoticed. \"" + prefix + "\" is added to available prefixes, senpai master." };
+            return "Your call did not go unnoticed. \"" + prefix + "\" is added to available prefixes.";
         }
     };
 
