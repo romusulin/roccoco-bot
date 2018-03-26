@@ -14,6 +14,7 @@
     var reqestedInfo = {};
     var isCurrentlyPlaying = false;
     var ytAudioQueue = [];
+    var nowPlaying;
     var dispatcher;
 
     /* PUBLIC METHODS */
@@ -82,11 +83,24 @@
         }
     };
 
+    var nowPlaying = function() {
+        reqestedInfo.channel.send(
+            "Now playing:"
+            + "\nTitle: " + nowPlaying.snippet.title
+            + "\nDescription: " + nowPlaying.snippet.description
+        );
+    };
+
+    var clearQueue = function() {
+        ytAudioQueue = [];
+        return reqestedInfo.channel.send("Queue cleared.");
+    }
+
     /* PRIVATE METHODS */
     function getSenderVoiceChannel(authorId) {
         return client.channels.find(x => { 
             return x['members'].keyArray().includes(String(authorId))
-            && x.type === Constants.CHANNEL_TYPE_VOICE; 
+                && x.type === Constants.CHANNEL_TYPE_VOICE; 
         });
     };
 
@@ -105,13 +119,14 @@
                     console.log("Added " + item.snippet.title + " to queue.");
                     ytAudioQueue.push({id: item.id.videoId, snippet: item.snippet});
                     reqestedInfo.channel.send("Pushed " + item.snippet.title + " to queue.");
-                    callback();
-                    return;
+                    
                 }
             } else {
                 console.log("Unexpected error when searching YouTube");
                 return;
             }
+            callback();
+            return;
         });
         return;
     };
@@ -137,6 +152,7 @@
         let audioQueueElement = queue.shift();
         let streamUrl = audioQueueElement.id;
         let snippet = audioQueueElement.snippet;
+        nowPlaying = audioQueueElement;
 
         if (!streamUrl) {
             return;
@@ -182,7 +198,9 @@
         skip: skip,
         showQueue: showQueue,
         pause: resume,
-        resume: resume
+        resume: resume,
+        nowPlaying: nowPlaying,
+        clearQueue: clearQueue
     };
     module.exports = music_module;
 })();

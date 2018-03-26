@@ -47,6 +47,10 @@ client.on("message", msg => {
         MusicManager.pause();
     } else if (cmd === Constants.GAME) {
         GamesManager.rpc(argObj);
+    } else if (cmd === Constants.NOW_PLAYING) {
+        MusicManager.nowPlaying();
+    } else if (cmd === Constants.CLEAR_QUEUE) {
+        MusicManager.clearQueue();
     }
 });
 

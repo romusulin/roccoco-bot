@@ -12,7 +12,9 @@
         PAUSE: "pause",
         RESUME: "resume",
         SHUT_DOWN: "shutdown",
-        GAME: "game"
+        GAME: "game",
+        NOW_PLAYING: "np",
+        CLEAR_QUEUE: "cl"
     };
     module.exports = constants;
 })();
