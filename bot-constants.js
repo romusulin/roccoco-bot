@@ -15,7 +15,8 @@
         GAME: "game",
         NOW_PLAYING: "np",
         CLEAR_QUEUE: "cl",
-        AUTOPLAY: "autoplay"
+        AUTOPLAY: "autoplay",
+        MUSIC_HISTORY_SIZE: 15
     };
     module.exports = constants;
 })();

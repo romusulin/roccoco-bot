@@ -14,9 +14,12 @@
     var requestedInfo = {};
     var isCurrentlyPlaying = false;
     var ytAudioQueue = [];
+    var ytAudioHistory = [];
     var nowPlaying;
     var dispatcher;
     var isAutoPlayOn = false;
+
+
     /* PUBLIC METHODS */
     var init = function(argObj) {
         requestedInfo = {userId: argObj.authorId, channel: argObj.channel};
@@ -97,6 +100,9 @@
     }
 
     var autoPlay = function(argObj) {
+        if (!voiceChannel) {
+            init(argObj);
+        }
         isAutoPlayOn = true;
         searchYoutube(argObj.args, function() {
             playStream(ytAudioQueue);
@@ -111,16 +117,6 @@
         });
     };
 
-    function getVideoObjectFromKeyword(kw, callback) {
-        if (!kw.match("youtube.com|youtu.be|https")) {
-            searchYoutube(kw, function(retObj) {
-                console.debug(retObj);
-                callback(retObj);
-            });
-        }
-        
-    };
-
     function searchYoutubeAutoplay(videoId, callback) {
         var requestUrl = "https://www.googleapis.com/youtube/v3/search" + `?part=snippet&relatedToVideoId=${videoId}&type=video&key=${auth.youtube_api_key}`;
         request(requestUrl, (error, response) => {
@@ -131,12 +127,21 @@
                     return requestedInfo.channel.send("Query returned 0 results.");
                 }
 
-                let item = body.items[0];
+                var item;
+                for (i = 0; i < body.items.length; i++) {
+                      if (shouldPlayThisSong(body.items[i])) {
+                          item = body.items[i];
+                          break;
+                      }
+                }
+    
+                console.log(item);
                 if (item.id.kind === 'youtube#video') {
                     console.log("Added " + item.snippet.title + " to queue.");
                     retObj.id = item.id.videoId;
                     retObj.snippet = item.snippet;
                     ytAudioQueue.push(retObj);
+                    ytAudioHistory.push(retObj);
                     if (!isAutoPlayOn) requestedInfo.channel.send("Pushed " + item.snippet.title + " to queue.");
                     
                 }
@@ -151,6 +156,21 @@
         });
     }
 
+    function shouldPlayThisSong(item) {
+        let retVal = true;
+
+        _.each(ytAudioHistory, function(ytElem) {
+            if(item.id.videoId === ytElem.id) {
+                retVal = false;
+            }
+        });
+
+        if (ytAudioHistory.length > Constants.MUSIC_HISTORY_SIZE) {
+            ytAudioHistory.shift();
+        }
+
+        return retVal;
+    };
 
     function searchYoutube(searchKeywords, callback) {
         var requestUrl = 'https://www.googleapis.com/youtube/v3/search' + `?part=snippet&q=${escape(searchKeywords)}&key=${auth.youtube_api_key}`;
@@ -169,6 +189,7 @@
                     retObj.id = item.id.videoId;
                     retObj.snippet = item.snippet;
                     ytAudioQueue.push(retObj);
+                    ytAudioHistory.push(retObj);
                     if (!isAutoPlayOn) requestedInfo.channel.send("Pushed " + item.snippet.title + " to queue.");
                     
                 }
@@ -178,7 +199,6 @@
             }
     
             if (typeof callback === "function") {
-                console.log(retObj);
                 callback(retObj);
             }
         });
@@ -214,7 +234,7 @@
 
         const stream = ytdl(streamUrl, { filter: 'audioonly' });
         dispatcher = client.voiceConnections.first()
-            .playStream(stream, { seek: 0, volume: 0.05 })
+            .playStream(stream, { seek: 0, volume: 0.1 })
             .on('start', () => {
                 console.log("--> Dispatcher started speaking.")
             })
@@ -227,8 +247,8 @@
             })
             .on('end', (reason) => {
                 isCurrentlyPlaying = false;
+                console.log("--> Dispatcher ended:" + reason);
                 if (isAutoPlayOn === false) {
-                    console.log("--> Dispatcher ended:" + reason);
                     playStream(ytAudioQueue);
                     return;   
                 } else {
