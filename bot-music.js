@@ -5,34 +5,26 @@
     var request = require('superagent');
 
     //Imports
+    var Controller = require("./bot-music-ctrl.js");
     var Constants = require("./bot-constants.js");
     var auth = require("./auth.json");
 
-
-    // Vars
-    var voiceChannel = null;
-    var requestedInfo = {};
-    var isCurrentlyPlaying = false;
-    var ytAudioQueue = [];
-    var ytAudioHistory = [];
-    var nowPlaying;
-    var dispatcher;
     var isAutoPlayOn = false;
 
 
     /* PUBLIC METHODS */
     var init = function(argObj) {
-        requestedInfo = {userId: argObj.authorId, channel: argObj.channel};
-        let vc = getSenderVoiceChannel(argObj.authorId);
-        if (voiceChannel && voiceChannel.name === vc.name) {
+        Controller.init(argObj.authorId, argObj.channel);
+        let vc = Controller.getVoiceChannelByUserId(argObj.authorId);
+        if (Controller.currentVoiceChannel && Controller.currentVoiceChannel.name === vc.name) {
             return "I'm already in that channel.";
         }
 
-        voiceChannel = vc;
+        Controller.currentVoiceChannel = vc;
 
-        if (voiceChannel) {
-            voiceChannel.join();
-            return "Joined voice channel: " + voiceChannel.name;
+        if (Controller.currentVoiceChannel) {
+            Controller.currentVoiceChannel.join();
+            return "Joined voice channel: " + Controller.currentVoiceChannel.name;
         } else {
             return "Failed joining channel.";
         }
@@ -40,10 +32,10 @@
 
 
     var leave = function() {
-        if (voiceChannel) {
-            voiceChannel.leave();
-            let vcName = voiceChannel.name;
-            voiceChannel = null;
+        if (!_.isEmpty(Controller.currentVoiceChannel)) {
+            Controller.currentVoiceChannel.leave(Constants.LEAVE);
+            let vcName = Controller.currentVoiceChannel.name;
+            Controller.currentVoiceChannel = null;
             return "Left voice channel: " + vcName + ".";
         } else {
             return "I'm not in a channel.";
@@ -51,10 +43,10 @@
     }
 
     var play = function(argObj) {
-        if (!voiceChannel) {
+        if (!Controller.currentVoiceChannel) {
             init(argObj);
         }
-        searchYoutube(argObj.args, function() { playStream(ytAudioQueue) });   
+        searchYoutube(argObj.args, function() { playStream(Controller.ytAudioQueue) });   
     };
 
     var skip = function() {
@@ -65,68 +57,61 @@
     var showQueue = function() {
         let queueString = "Full queue:";
         let no = 0;
-        _.each(ytAudioQueue, function(elem) {
+        _.each(Controller.ytAudioQueue, function(elem) {
             queueString += "\n" + ++no + ". " +  elem.snippet.title;
         });
-        requestedInfo.channel.send(queueString);
+        Controller.request.textChannel.send(queueString);
         return queueString;
     };
 
     var resume = function() {
         //TODO
-        if (dispatcher) {
-            dispatcher.resume();
+        if (Controller.dispatcher) {
+            Controller.dispatcher.resume();
         }
     };
 
     var pause = function() {
         //TODO
-        if (dispatcher) {
-            dispatcher.pause();
+        if (Controller.dispatcher) {
+            Controller.dispatcher.pause();
         }
     };
 
     var nowPlaying = function() {
-        requestedInfo.channel.send(
+        Controller.request.textChannel.send(
             "Now playing:"
-            + "\nTitle: " + nowPlaying.snippet.title
-            + "\nDescription: " + nowPlaying.snippet.description
+            + "\nTitle: " + Controller.nowPlaying.snippet.title
+            + "\nDescription: " + Controller.nowPlaying.snippet.description
         );
     };
 
     var clearQueue = function() {
-        ytAudioQueue = [];
-        return requestedInfo.channel.send("Queue cleared.");
+        Controller.ytAudioQueue = [];
+        return Controller.request.textChannel.send("Queue cleared.");
     }
 
     var autoPlay = function(argObj) {
-        if (!voiceChannel) {
+        if (_.isEmpty(Controller.currentVoiceChannel )) {
             init(argObj);
         }
         isAutoPlayOn = true;
         searchYoutube(argObj.args, function() {
-            playStream(ytAudioQueue);
+            playStream(Controller.ytAudioQueue);
         });
     }
 
     var showPlayedHistory = function() {
         let queueString = "Full history:";
         let no = 0;
-        _.each(ytAudioHistory, function(elem) {
+        _.each(Controller.ytAudioHistory, function(elem) {
             queueString += "\n" + ++no + ". " +  elem.snippet.title;
         });
-        requestedInfo.channel.send(queueString);
+        Controller.request.textChannel.send(queueString);
         return queueString;
     }
 
     /* PRIVATE METHODS */
-    function getSenderVoiceChannel(authorId) {
-        return client.channels.find(x => { 
-            return x['members'].keyArray().includes(String(authorId))
-                && x.type === Constants.CHANNEL_TYPE_VOICE; 
-        });
-    };
-
     function searchYoutubeAutoplay(videoId, callback) {
         var requestUrl = "https://www.googleapis.com/youtube/v3/search" + `?part=snippet&relatedToVideoId=${videoId}&type=video&key=${auth.youtube_api_key}`;
         request(requestUrl, (error, response) => {
@@ -134,7 +119,7 @@
                 let body = response.body;
                 var retObj = {id: "", snippet: {}};
                 if (body.items.length === 0) {
-                    return requestedInfo.channel.send("Query returned 0 results.");
+                    return Controller.request.channel.send("Query returned 0 results.");
                 }
 
                 var item;
@@ -151,9 +136,9 @@
                     console.log("Added " + item.snippet.title + " to queue.");
                     retObj.id = item.id.videoId;
                     retObj.snippet = item.snippet;
-                    ytAudioQueue.push(retObj);
-                    ytAudioHistory.push(retObj);
-                    if (!isAutoPlayOn) requestedInfo.channel.send("Pushed " + item.snippet.title + " to queue.");
+                    Controller.ytAudioQueue.push(retObj);
+                    Controller.ytAudioHistory.push(retObj);
+                    if (!isAutoPlayOn) Controller.request.textChannel.send("Pushed " + item.snippet.title + " to queue.");
                     
                 }
             } else {
@@ -170,8 +155,11 @@
     function shouldPlayThisSong(item) {
         let retVal = true;
 
+        if (item === undefined || _.isEmpty(item) || item.id === undefined) {
+            return false;
+        }
         // Gets n last elements of yt audio history to check
-        _.each(ytAudioHistory.slice(Constants.CHECKED_HISTORY_SIZE * -1), function(ytElem) {
+        _.each(Controller.ytAudioHistory.slice(Constants.CHECKED_HISTORY_SIZE * -1), function(ytElem) {
             if(item.id.videoId === ytElem.id) {
                 retVal = false;
             }
@@ -188,7 +176,7 @@
             if (!error && response.statusCode == 200) {
                 let body = response.body;
                 if (body.items.length === 0) {
-                    return requestedInfo.channel.send("Query returned 0 results.");
+                    return Controller.request.textChannel.send("Query returned 0 results.");
                 }
 
                 let item = body.items[0];
@@ -196,9 +184,9 @@
                     console.log("Added " + item.snippet.title + " to queue.");
                     retObj.id = item.id.videoId;
                     retObj.snippet = item.snippet;
-                    ytAudioQueue.push(retObj);
-                    ytAudioHistory.push(retObj);
-                    if (!isAutoPlayOn) requestedInfo.channel.send("Pushed " + item.snippet.title + " to queue.");
+                    Controller.ytAudioQueue.push(retObj);
+                    Controller.ytAudioHistory.push(retObj);
+                    if (!isAutoPlayOn) Controller.request.textChannel.send("Pushed " + item.snippet.title + " to queue.");
                     
                 }
             } else {
@@ -219,49 +207,54 @@
 
     function playStream(queue, isSkipInitiated) {
         if (isSkipInitiated) {
-            dispatcher.end();
+            Controller.dispatcher.end();
             return;
         }
-        if (isCurrentlyPlaying) {
+        if (Controller.isCurrentlyPlaying) {
             return;
         }
 
-        if (queue.length === 0 && requestedInfo !== undefined) {
-            requestedInfo.channel.send("<@" + requestedInfo.userId + "> Queue is empty.");
+        if (queue.length === 0 && Controller.request !== undefined) {
+            Controller.request.textChannel.send("<@" + Controller.request.userId + "> Queue is empty.");
             return;
         }
 
         let audioQueueElement = queue.shift();
         let streamUrl = audioQueueElement.id;
         let snippet = audioQueueElement.snippet;
-        nowPlaying = audioQueueElement;
+        Controller.nowPlaying = audioQueueElement;
 
         if (!streamUrl) {
             return;
         }
 
         const stream = ytdl(streamUrl, { filter: 'audioonly' });
-        dispatcher = client.voiceConnections.first()
+        Controller.dispatcher = client.voiceConnections.first()
             .playStream(stream, { seek: 0, volume: 0.1 })
             .on('start', () => {
                 console.log("--> Dispatcher started speaking.")
             })
             .on('speaking', (isSpeaking) => {
                 if (!isSpeaking) {
-                    isCurrentlyPlaying = false;
-                    dispatcher.end();
+                    Controller.isCurrentlyPlaying = false;
+                    Controller.dispatcher.end();
                     return;
                 }
             })
             .on('end', (reason) => {
-                isCurrentlyPlaying = false;
+                Controller.isCurrentlyPlaying = false;
+                if (reason === Constants.LEAVE) {
+                    return;
+                }
+
+                
                 console.log("--> Dispatcher ended:" + reason);
                 if (isAutoPlayOn === false) {
-                    playStream(ytAudioQueue);
+                    playStream(Controller.ytAudioQueue);
                     return;   
                 } else {
-                    searchYoutubeAutoplay(nowPlaying.id, function() {
-                        playStream(ytAudioQueue);
+                    searchYoutubeAutoplay(Controller.nowPlaying.id, function() {
+                        playStream(Controller.ytAudioQueue);
                     });
 
                 }
@@ -273,8 +266,8 @@
 
         console.log("Streaming audio from " + streamUrl + " (" + snippet.title + ")");
 
-        isCurrentlyPlaying = true;
-        requestedInfo.channel.send(
+        Controller.isCurrentlyPlaying = true;
+        Controller.request.textChannel.send(
             "Playing: " + snippet.title 
             + "\nChannel: " + snippet.channelTitle
         );
