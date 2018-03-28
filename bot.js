@@ -35,6 +35,8 @@ client.on("message", msg => {
         return msg.channel.send(MusicManager.leave());
     } else if (cmd === Constants.PLAY) {
         MusicManager.play(argObj);
+    } else if (cmd === Constants.USE_THIS_TEXT_CHANNEL) {
+        MusicManager.useThisTextChannel(argObj);
     } else if (cmd === Constants.SKIP) {
         MusicManager.skip();
     } else if (cmd === Constants.QUEUE) {

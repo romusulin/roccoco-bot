@@ -5,11 +5,12 @@
   "main": "bot.js",
   "author": "romusulin",
   "dependencies": {
+    "bhttp": "^1.2.4",
+    "bluebird": "^3.5.1",
     "discord.js": "^11.3.2",
     "ffmpeg": "0.0.4",
     "lodash": "^4.17.5",
     "opusscript": "0.0.6",
-    "superagent": "^3.8.2",
     "ytdl-core": "^0.20.2"
   }
 }

@@ -17,7 +17,8 @@
         CLEAR_QUEUE: "cl",
         AUTOPLAY: "autoplay",
         CHECKED_HISTORY_SIZE: 15,
-        SHOW_PLAYED_HISTORY: "playedhistory"
+        SHOW_PLAYED_HISTORY: "playedhistory",
+        USE_THIS_TEXT_CHANNEL: "usethistextchannel"
     };
     module.exports = constants;
 })();

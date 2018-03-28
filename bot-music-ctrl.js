@@ -6,6 +6,7 @@
         ytAudioQueue : [],
         ytAudioHistory: [],
         nowPlaying: {},
+        autoplayPointer: {},
         dispatcher: {},
         request: {
             userId: "",
@@ -15,7 +16,7 @@
             id: "",
             snippet : {}
         },
-        init: function(authorId, textChannel) {
+        setRequest: function(authorId, textChannel) {
             this.request.userId = authorId;
             this.request.textChannel = textChannel;
         },
@@ -24,6 +25,15 @@
                 return x['members'].keyArray().includes(String(this.request.userId))
                     && x.type === Constants.CHANNEL_TYPE_VOICE; 
             });
+        },
+        pushToQueue: function(obj) {
+            this.ytAudioQueue.push(obj);
+            this.ytAudioHistory.push(obj);
+        },
+        shiftQueue: function() {
+            let retObj = this.ytAudioQueue.shift();
+            this.nowPlaying = retObj;
+            return retObj;
         }
     };
     module.exports = Config;
