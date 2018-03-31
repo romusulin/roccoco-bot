@@ -2,6 +2,7 @@
 var Discord = require("discord.js");
 var auth = require("./auth.json");
 var _ = require("lodash");
+var Promise = require("bluebird");
 
 // Imports
 var Constants = require("./bot-constants.js");
@@ -11,6 +12,7 @@ var GamesManager = require("./bot-games.js");
 // Didscord client
 const client = new Discord.Client();
 global.client = client;
+global.Discord =  Discord;
 client.login(auth.token);
 client.on("ready", () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -36,7 +38,13 @@ client.on("message", msg => {
     } else if (cmd === Constants.PLAY) {
         MusicManager.play(argObj);
     } else if (cmd === Constants.USE_THIS_TEXT_CHANNEL) {
-        MusicManager.useThisTextChannel(argObj);
+        Promise.try(function() {
+            return MusicManager.useThisTextChannel(argObj);
+        }).then(function() {
+            return msg.react("🍆");
+        });
+    } else if (cmd === Constants.PING_TEXT_CHANNEL) {
+        return MusicManager.pingTextChannel();
     } else if (cmd === Constants.SKIP) {
         MusicManager.skip();
     } else if (cmd === Constants.QUEUE) {
