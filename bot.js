@@ -13,7 +13,9 @@ var GamesManager = require("./bot-games.js");
 const client = new Discord.Client();
 global.client = client;
 global.Discord =  Discord;
+
 client.login(auth.token);
+
 client.on("ready", () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });

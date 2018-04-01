@@ -6,6 +6,7 @@
     var Promise = require('bluebird');
 
     //Imports
+    var EmbedBuilder = require("./bot-music-embed.js");
     var Controller = require("./bot-music-ctrl.js");
     var Constants = require("./bot-constants.js");
     var auth = require("./auth.json");
@@ -77,11 +78,8 @@
     };
 
     var nowPlaying = function() {
-        Controller.request.textChannel.send(
-            "Now playing:"
-            + "\nTitle: " + Controller.nowPlaying.snippet.title
-            + "\nDescription: " + Controller.nowPlaying.snippet.description
-        );
+        let embed = EmbedBuilder.getNowPlaying(Controller.nowPlaying);
+        Controller.request.textChannel.send({embed});
     };
 
     var clearQueue = function() {
@@ -166,7 +164,7 @@
         }).then(function(response) {
             let body = response.body;
             if (body.items.length === 0) {
-                throw Error("Query returned 0 results.");
+                Controller.request.textChannel.send("Query returned 0 results.");
             }
 
             var item;
@@ -233,24 +231,7 @@
         console.log("Streaming audio from " + Controller.nowPlaying.id + " (" + Controller.nowPlaying.snippet.title + ")");
 
         Controller.isCurrentlyPlaying = true;
-        /*Controller.request.textChannel.send(
-            "**Playing**: " + Controller.nowPlaying.snippet.title 
-            + "\n**Channel**: " + Controller.nowPlaying.snippet.channelTitle
-            + "\n\n From: https://www.youtube.com/watch?v" + Controller.nowPlaying.id
-        );*/
-
-        const embed = new Discord.RichEmbed()
-        .setTitle("RoccocoBot is now playing:")
-        .setAuthor("Military Spec Battle Worn Bot", "https://i.redditmedia.com/21uJy-0Ptmt1HLSnkPar37ScvmUCeOXyj1DeqZ-JURY.jpg?w=432&s=e7fdfac555c5fbcc68a36fad051bb7d0")
-        .setColor(0x7851a9)
-        .setThumbnail(Controller.nowPlaying.snippet.thumbnails.high.url)
-        .setTimestamp()
-        .setURL("https://discord.js.org/#/docs/main/indev/class/RichEmbed")
-        .addField("Song:", Controller.nowPlaying.snippet.title)
-        .addField("Channel:", Controller.nowPlaying.snippet.channelTitle)
-        .setFooter("RoccocoBot", 
-        "https://i.redditmedia.com/21uJy-0Ptmt1HLSnkPar37ScvmUCeOXyj1DeqZ-JURY.jpg?w=432&s=e7fdfac555c5fbcc68a36fad051bb7d0"
-        );
+        let embed = EmbedBuilder.getNowPlaying(Controller.nowPlaying);
         Controller.request.textChannel.send({embed});
     };
 
