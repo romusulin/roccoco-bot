@@ -29,9 +29,12 @@
                     && x.type === Constants.CHANNEL_TYPE_VOICE; 
             });
         },
-        pushToQueue: function(obj) {
+        pushToQueue: function(obj, isAutoplayed) {
             this.ytAudioQueue.push(obj);
             this.ytAudioHistory.push(obj);
+            if (isAutoplayed) {
+                this.autoplayPointer = obj;
+            }
         },
         shiftQueue: function() {
             let retObj = this.ytAudioQueue.shift();

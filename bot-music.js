@@ -48,8 +48,8 @@
     };
 
     var skip = function() {
-        console.log("Skipped.");
-        playStream(true);
+        Controller.dispatcher.end();
+        return;
     };
 
     var showQueue = function() {
@@ -94,7 +94,7 @@
             init(argObj);
         }
         Controller.isAutoPlayOn = true;
-        searchYoutube(argObj.args);
+        searchYoutube(argObj.args, true);
     }
 
     var pingTextChannel = function() {
@@ -117,7 +117,11 @@
     }
     /* PRIVATE METHODS */
 
-    function searchYoutube(searchKeywords) {
+    function searchYoutube(searchKeyWords) {
+        searchYoutube(searchKeyWords, false);
+    };
+
+    function searchYoutube(searchKeywords, isAutoplayed) {
         let requestUrl = 'https://www.googleapis.com/youtube/v3/search' 
             + `?part=snippet&q=${escape(searchKeywords)}`
             + `&key=${auth.youtube_api_key}`;
@@ -131,7 +135,7 @@
             }
             
             let item = body.items[0];
-            if (item.id.kind === 'youtube#video') {
+            if (item.id.kind === Constants.YOUTUBE_KIND_VIDEO) {
                 console.log("Added " + item.snippet.title + " to queue.");
                 return {
                     id: item.id.videoId,
@@ -140,7 +144,7 @@
                 if (!Controller.isAutoPlayOn) Controller.request.textChannel.send("Pushed " + item.snippet.title + " to queue.");
             }
         }).then(function(retObj) {
-            Controller.pushToQueue(retObj);
+            Controller.pushToQueue(retObj, isAutoplayed);
         }).then(function(isFound) { 
             playStream();
         });
@@ -148,7 +152,7 @@
 
     function searchYoutubeRelated() {
         var requestUrl = "https://www.googleapis.com/youtube/v3/search"
-            + `?part=snippet&relatedToVideoId=${Controller.nowPlaying.id}`
+            + `?part=snippet&relatedToVideoId=${Controller.autoplayPointer.id}`
             + `&type=video&key=${auth.youtube_api_key}`;
 
         
@@ -168,7 +172,7 @@
                   }
             }
 
-            if (item.id.kind === 'youtube#video') {
+            if (item.id.kind === Constants.YOUTUBE_KIND_VIDEO) {
                 console.log("Added " + item.snippet.title + " to queue.");
                 return {
                     id: item.id.videoId,
@@ -184,46 +188,43 @@
     }
 
     function playStream() {
-        playStream(false);
-    };
-
-    function playStream(isSkipInitiated) {
-        if (isSkipInitiated) {
-            Controller.dispatcher.end();
-            return;
-        }
         if (Controller.ytAudioQueue.length === 0
-            || Controller.shiftQueue() === undefined
-            || Controller.isCurrentlyPlaying
-            ) {
+            || Controller.isCurrentlyPlaying) {
             return;
         }
 
         
+
         Promise.try(function() {
+            return Controller.shiftQueue();
+        }).then(function() {
             return ytdl(Controller.nowPlaying.id, { filter: 'audioonly' });
         }).then(function(stream) {
-            Controller.dispatcher = client.voiceConnections.first().playStream(stream, { seek: 0, volume: 0.1 })
+            Controller.dispatcher = client.voiceConnections.first()
+            .playStream(stream, { seek: 0, volume: 0.1 })
             .on('start', () => {
                 console.log("--> Dispatcher started speaking.")
-            }).on('speaking', (isSpeaking) => {
+            })
+            .on('speaking', (isSpeaking) => {
                 if (!isSpeaking) {
                     Controller.isCurrentlyPlaying = false;
                     Controller.dispatcher.end();
                     return;
                 }
-            }).on('end', (reason) => {
+            })
+            .on('end', (reason) => {
                 console.log("--> Dispatcher ended:" + reason);
                 Controller.isCurrentlyPlaying = false;
                 if (reason === Constants.LEAVE) {
                     return;
                 }
-                if (!Controller.isAutoPlayOn) {
+                if (!Controller.isAutoPlayOn || Controller.ytAudioQueue.length !== 0) {
                     return playStream();   
                 } else {
                     return searchYoutubeRelated();
                 }     
-            }).on('error', (e) => {
+            })
+            .on('error', (e) => {
                 console.log("--> Dispatcher encountered error: " + e);
             });
         });

@@ -19,7 +19,8 @@
         CHECKED_HISTORY_SIZE: 15,
         SHOW_PLAYED_HISTORY: "playedhistory",
         USE_THIS_TEXT_CHANNEL: "usethistextchannel",
-        PING_TEXT_CHANNEL: "pingtextchannel"
+        PING_TEXT_CHANNEL: "pingtextchannel",
+        YOUTUBE_KIND_VIDEO: "youtube#video"
     };
     module.exports = constants;
 })();
