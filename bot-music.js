@@ -114,7 +114,12 @@
 
     var useThisTextChannel = function(argObj) {
         Controller.setRequest(argObj.authorId, argObj.channel);
-    }
+    };
+
+    var turnAutoplayOff = function turnAutoplayOff() {
+        Controller.isAutoPlayOn = false;
+        Controller.autoplayPointer = {};
+    };
     /* PRIVATE METHODS */
 
     function searchYoutube(searchKeyWords) {
@@ -180,7 +185,6 @@
                 };
             }
         }).then(function(retObj) {
-            console.log(retObj.snippet);
             Controller.pushToQueue(retObj);
         }).then(function(isFound) { 
             playStream();
@@ -224,9 +228,6 @@
                     return searchYoutubeRelated();
                 }     
             })
-            .on('error', (e) => {
-                console.log("--> Dispatcher encountered error: " + e);
-            });
         });
         
         console.log("Streaming audio from " + Controller.nowPlaying.id + " (" + Controller.nowPlaying.snippet.title + ")");
@@ -265,6 +266,7 @@
         nowPlaying: nowPlaying,
         clearQueue: clearQueue,
         autoPlay: autoPlay,
+        turnAutoplayOff: turnAutoplayOff,
         showPlayedHistory: showPlayedHistory,
         useThisTextChannel: useThisTextChannel,
         pingTextChannel: pingTextChannel
