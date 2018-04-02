@@ -124,6 +124,8 @@
         searchYoutube(searchKeyWords, false);
     };
 
+
+    
     function searchYoutube(searchKeywords, isAutoplayed) {
         let requestUrl = 'https://www.googleapis.com/youtube/v3/search' 
             + `?part=snippet&q=${escape(searchKeywords)}`
@@ -131,6 +133,7 @@
 
         Promise.try(function() {
             return bhttp.get(requestUrl);
+
         }).then(function(response) {
             let body = response.body;
             if (body.items.length === 0) {
@@ -140,16 +143,32 @@
             let item = body.items[0];
             if (item.id.kind === Constants.YOUTUBE_KIND_VIDEO) {
                 console.log("Added " + item.snippet.title + " to queue.");
-                return {
+                let retObj = {
                     id: item.id.videoId,
                     snippet: item.snippet
                 };
-                if (!Controller.isAutoPlayOn) Controller.request.textChannel.send("Pushed " + item.snippet.title + " to queue.");
+
+                let embed = EmbedBuilder.getPushedToQueue(retObj);
+                if(Controller.isCurrentlyPlaying) Controller.request.textChannel.send({embed});
+
+                return retObj;
             }
         }).then(function(retObj) {
             Controller.pushToQueue(retObj, isAutoplayed);
+            return retObj;
+        }).then(function(retObj) {
+            let requestUrl = 'https://www.googleapis.com/youtube/v3/videos?'
+            + `id=${retObj.id}`
+            + `&key=${auth.youtube_api_key}`
+            + `&part=contentDetails`;
+            return bhttp.get(requestUrl);         
+        }).then(function(response) {
+            Controller.ytAudioQueue
+                .find( x => x.id === response.body.items[0].id)
+                .contentDetails = response.body.items[0].contentDetails;
+            return;
         }).then(function(isFound) { 
-            playStream();
+            return playStream();
         });
     };
 
@@ -183,9 +202,20 @@
                 };
             }
         }).then(function(retObj) {
-            Controller.pushToQueue(retObj);
-        }).then(function(isFound) { 
-            playStream();
+            Controller.pushToQueue(retObj, true);
+            return retObj;
+        }).then(function(retObj) {
+            let requestUrl = 'https://www.googleapis.com/youtube/v3/videos?'
+            + `id=${retObj.id}`
+            + `&key=${auth.youtube_api_key}`
+            + `&part=contentDetails`;
+            return bhttp.get(requestUrl);         
+        }).then(function(response) {
+            return Controller.ytAudioQueue
+                .find( x => x.id === response.body.items[0].id)
+                .contentDetails = response.body.items[0].contentDetails;
+        }).then(function() { 
+            return playStream();
         });
     }
 
