@@ -1,6 +1,7 @@
 (function() {
     var Constants = require("./bot-constants.js");
     var _ = require("lodash");
+    var EmbedBuilder = require("./bot-music-embed");
     
     var Config = {
         currentVoiceChannel: {},
@@ -35,6 +36,7 @@
             if (isAutoplayed) {
                 this.autoplayPointer = obj;
             }
+            return obj;
         },
         shiftQueue: function() {
             let retObj = this.ytAudioQueue.shift();

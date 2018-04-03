@@ -57,18 +57,20 @@ client.on("message", msg => {
         MusicManager.resume();
     } else if (cmd === Constants.PAUSE) {
         MusicManager.pause();
-    } else if (cmd === Constants.GAME) {
-        GamesManager.rpc(argObj);
     } else if (cmd === Constants.NOW_PLAYING) {
         MusicManager.nowPlaying();
     } else if (cmd === Constants.CLEAR_QUEUE) {
         MusicManager.clearQueue();
+    } else if (cmd === Constants.REMOVE) {
+        MusicManager.removeFromQueue()
     } else if (cmd === Constants.AUTOPLAY) {
         MusicManager.autoPlay(argObj);
     } else if (cmd === Constants.AUTOPLAY_OFF) {
         MusicManager.turnAutoplayOff();
     } else if (cmd === Constants.SHOW_PLAYED_HISTORY) {
         MusicManager.showPlayedHistory();
+    } else if (cmd === Constants.GAME) {
+        GamesManager.rpc(argObj);
     }
 });
 

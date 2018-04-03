@@ -7,6 +7,7 @@
 
     //Imports
     var EmbedBuilder = require("./bot-music-embed.js");
+    var YoutubeApiCaller = require("./bot-music-yt-api.js");
     var Controller = require("./bot-music-ctrl.js");
     var Constants = require("./bot-constants.js");
     var auth = require("./auth.json");
@@ -45,7 +46,14 @@
         if (_.isEmpty(Controller.currentVoiceChannel)) {
             init(argObj);
         }
-        searchYoutube(argObj.args);   
+
+        Promise.try(function() {
+            return Promise.resolve(searchYoutube(argObj.args));
+        }).then(function(obj) {
+            let embed = EmbedBuilder.getPushedToQueue(obj);
+            if(Controller.isCurrentlyPlaying) Controller.request.textChannel.send({embed});
+            playStream();
+        });
     };
 
     var skip = function() {
@@ -92,7 +100,11 @@
             init(argObj);
         }
         Controller.isAutoPlayOn = true;
-        searchYoutube(argObj.args, true);
+        Promise.try(function() {
+            return searchYoutube(argObj.args, true);
+        }).then(function() {
+            playStream();
+        });
     }
 
     var pingTextChannel = function() {
@@ -124,98 +136,39 @@
         searchYoutube(searchKeyWords, false);
     };
 
-
-    
     function searchYoutube(searchKeywords, isAutoplayed) {
-        let requestUrl = 'https://www.googleapis.com/youtube/v3/search' 
-            + `?part=snippet&q=${escape(searchKeywords)}`
-            + `&key=${auth.youtube_api_key}`;
-
-        Promise.try(function() {
-            return bhttp.get(requestUrl);
-
-        }).then(function(response) {
-            let body = response.body;
-            if (body.items.length === 0) {
-                throw Error("Query returned 0 results.");
-            }
-            
-            let item = body.items[0];
-            if (item.id.kind === Constants.YOUTUBE_KIND_VIDEO) {
-                console.log("Added " + item.snippet.title + " to queue.");
-                let retObj = {
-                    id: item.id.videoId,
-                    snippet: item.snippet
-                };
-
-                let embed = EmbedBuilder.getPushedToQueue(retObj);
-                if(Controller.isCurrentlyPlaying) Controller.request.textChannel.send({embed});
-
-                return retObj;
-            }
+        return Promise.try(function() {
+            return YoutubeApiCaller.getVideoIdByKeywords(searchKeywords);
+        }).then(function(videoId) {
+            return YoutubeApiCaller.getVideoWrapperById(videoId);
         }).then(function(retObj) {
-            Controller.pushToQueue(retObj, isAutoplayed);
-            return retObj;
-        }).then(function(retObj) {
-            let requestUrl = 'https://www.googleapis.com/youtube/v3/videos?'
-            + `id=${retObj.id}`
-            + `&key=${auth.youtube_api_key}`
-            + `&part=contentDetails`;
-            return bhttp.get(requestUrl);         
-        }).then(function(response) {
-            Controller.ytAudioQueue
-                .find( x => x.id === response.body.items[0].id)
-                .contentDetails = response.body.items[0].contentDetails;
-            return;
-        }).then(function(isFound) { 
-            return playStream();
+            return Promise.resolve(Controller.pushToQueue(retObj, isAutoplayed));
         });
     };
 
-    function searchYoutubeRelated() {
-        var requestUrl = "https://www.googleapis.com/youtube/v3/search"
-            + `?part=snippet&relatedToVideoId=${Controller.autoplayPointer.id}`
-            + `&type=video&key=${auth.youtube_api_key}`;
-
-        
-        Promise.try(function() {
-            return bhttp.get(requestUrl);
-        }).then(function(response) {
-            let body = response.body;
-            if (body.items.length === 0) {
-                Controller.request.textChannel.send("Query returned 0 results.");
+    function findIdOfNextSongToPlay(array) {
+        var item;
+        for (i = 0; i < array.length; i++) {
+              if (Controller.shouldPlayThisSong(array[i])) {
+                let item = array[i];
+                if (item.id.kind === Constants.YOUTUBE_KIND_VIDEO) {
+                    return Promise.resolve(item.id.videoId);
+                }   
+                break;
             }
+        }
+        return Promise.reject("No suitable video found.");
+    };
 
-            var item;
-            for (i = 0; i < body.items.length; i++) {
-                  if (Controller.shouldPlayThisSong(body.items[i])) {
-                      item = body.items[i];
-                      break;
-                  }
-            }
-
-            if (item.id.kind === Constants.YOUTUBE_KIND_VIDEO) {
-                console.log("Added " + item.snippet.title + " to queue.");
-                return {
-                    id: item.id.videoId,
-                    snippet: item.snippet
-                };
-            }
+    function searchYoutubeRelated() {        
+        return Promise.try(function() {
+            return YoutubeApiCaller.getRelatedVideosById(Controller.autoplayPointer.id);
+        }).then(function(arrayOfVideoWrappers) {
+            return findIdOfNextSongToPlay(arrayOfVideoWrappers)
+        }).then(function(videoId) {
+            return YoutubeApiCaller.getVideoWrapperById(videoId);
         }).then(function(retObj) {
-            Controller.pushToQueue(retObj, true);
-            return retObj;
-        }).then(function(retObj) {
-            let requestUrl = 'https://www.googleapis.com/youtube/v3/videos?'
-            + `id=${retObj.id}`
-            + `&key=${auth.youtube_api_key}`
-            + `&part=contentDetails`;
-            return bhttp.get(requestUrl);         
-        }).then(function(response) {
-            return Controller.ytAudioQueue
-                .find( x => x.id === response.body.items[0].id)
-                .contentDetails = response.body.items[0].contentDetails;
-        }).then(function() { 
-            return playStream();
+            return Promise.resolve(Controller.pushToQueue(retObj, true));      
         });
     }
 
@@ -253,7 +206,11 @@
                 if (!Controller.isAutoPlayOn || Controller.ytAudioQueue.length !== 0) {
                     return playStream();   
                 } else {
-                    return searchYoutubeRelated();
+                    return Promise.try(function() {
+                        return searchYoutubeRelated();
+                    }).then(function() {
+                        playStream();
+                    });
                 }     
             })
         });
