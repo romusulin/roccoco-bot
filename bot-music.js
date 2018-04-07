@@ -85,6 +85,20 @@
         }
     };
 
+    var removeFromQueue = function(args) {
+        let index = args[0] - 1;
+        if (index => 0 && index < Controller.ytAudioQueue.length) {
+            let obj = Controller.ytAudioQueue.splice(index, 1);
+            let embed;
+            if (obj.length === 0 ) {
+                embed = EmbedBuilder.sendMessage("Index out of bounds.");
+            } else {
+                embed = EmbedBuilder.sendMessage("Removed " + obj[0].snippet.title + " from queue.");
+            }
+            Controller.request.textChannel.send({embed});
+        }
+    };
+
     var nowPlaying = function() {
         let embed = EmbedBuilder.getNowPlaying(Controller.nowPlaying);
         Controller.request.textChannel.send({embed});
@@ -105,6 +119,15 @@
         }).then(function() {
             playStream();
         });
+    };
+
+    var autoPlayThis = function() {
+        Controller.isAutoPlayOn = true;
+        if (Controller.isCurrentlyPlaying) {
+            Controller.autoplayPointer = Controller.nowPlaying;
+            let embed = EmbedBuilder.sendMessage("Autoplay pointer set on: " + Controller.nowPlaying.snippet.title);
+            Controller.request.textChannel.send({embed});
+        }
     }
 
     var pingTextChannel = function() {
@@ -130,6 +153,8 @@
         Controller.isAutoPlayOn = false;
         Controller.autoplayPointer = {};
     };
+
+
     /* PRIVATE METHODS */
 
     function searchYoutube(searchKeyWords) {
@@ -182,9 +207,13 @@
 
         Promise.try(function() {
             return Controller.shiftQueue();
-        }).then(function() {
-            return ytdl(Controller.nowPlaying.id, { filter: 'audioonly' });
+        }).then(function(obj) {
+            if (obj === undefined) {
+                return Promise.reject("end of queue");
+            }
+            return Promise.resolve(ytdl(Controller.nowPlaying.id, { filter: 'audioonly' }));
         }).then(function(stream) {
+            console.log("Streaming audio from " + Controller.nowPlaying.id + " (" + Controller.nowPlaying.snippet.title + ")");
             Controller.dispatcher = client.voiceConnections.first()
             .playStream(stream, { seek: 0, volume: 0.1 })
             .on('start', () => {
@@ -214,8 +243,6 @@
                 }     
             })
         });
-        
-        console.log("Streaming audio from " + Controller.nowPlaying.id + " (" + Controller.nowPlaying.snippet.title + ")");
 
         Controller.isCurrentlyPlaying = true;
         let embed = EmbedBuilder.getNowPlaying(Controller.nowPlaying);
@@ -234,10 +261,12 @@
         nowPlaying: nowPlaying,
         clearQueue: clearQueue,
         autoPlay: autoPlay,
+        removeFromQueue: removeFromQueue,
         turnAutoplayOff: turnAutoplayOff,
         showPlayedHistory: showPlayedHistory,
         useThisTextChannel: useThisTextChannel,
-        pingTextChannel: pingTextChannel
+        pingTextChannel: pingTextChannel,
+        autoPlayThis: autoPlayThis,
     };
     module.exports = music_module;
 })();

@@ -62,15 +62,24 @@ client.on("message", msg => {
     } else if (cmd === Constants.CLEAR_QUEUE) {
         MusicManager.clearQueue();
     } else if (cmd === Constants.REMOVE) {
-        MusicManager.removeFromQueue()
+        MusicManager.removeFromQueue(argObj.args);
     } else if (cmd === Constants.AUTOPLAY) {
         MusicManager.autoPlay(argObj);
+    } else if (cmd === Constants.AUTOPLAY_THIS) {
+        MusicManager.autoPlayThis();
     } else if (cmd === Constants.AUTOPLAY_OFF) {
         MusicManager.turnAutoplayOff();
     } else if (cmd === Constants.SHOW_PLAYED_HISTORY) {
         MusicManager.showPlayedHistory();
     } else if (cmd === Constants.GAME) {
         GamesManager.rpc(argObj);
+    } else if (cmd === Constants.NUDGE) {
+        Promise.try(function() {
+            MusicManager = require("./bot-music.js");
+            return client.destroy();
+        }).then(function() {
+            client.login(auth.token);
+        });
     }
 });
 

@@ -7,7 +7,7 @@
     var ytApiCaller = {
         getVideoIdByKeywords: function(searchKeywords, index = 0) {
             let requestUrl = 'https://www.googleapis.com/youtube/v3/search' 
-            + `?part=id&q=${escape(searchKeywords)}`
+            + `?part=id&q=${searchKeywords.join(' ')}`
             + `&key=${auth.youtube_api_key}`;
     
             

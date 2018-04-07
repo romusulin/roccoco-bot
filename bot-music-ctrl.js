@@ -40,7 +40,6 @@
         },
         shiftQueue: function() {
             let retObj = this.ytAudioQueue.shift();
-            this.nowPlaying = retObj;
             return retObj;
         },
         shouldPlayThisSong: function(item) {
