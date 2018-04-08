@@ -3,12 +3,14 @@ var Discord = require("discord.js");
 var auth = require("./auth.json");
 var _ = require("lodash");
 var Promise = require("bluebird");
+var reload = require("require-reload");
 
 // Imports
 var Constants = require("./bot-constants.js");
 var PrefixManager = require("./bot-prefix.js");
 var MusicManager = require("./bot-music.js");
 var GamesManager = require("./bot-games.js");
+var EmbedBuilder = require("./bot-music-embed");
 // Didscord client
 const client = new Discord.Client();
 global.client = client;
@@ -75,9 +77,11 @@ client.on("message", msg => {
         GamesManager.rpc(argObj);
     } else if (cmd === Constants.NUDGE) {
         Promise.try(function() {
-            MusicManager = require("./bot-music.js");
+            return MusicManager.reset();
+        }).then(function() {
             return client.destroy();
         }).then(function() {
+            MusicManager = reload("./bot-music.js");
             client.login(auth.token);
         });
     }

@@ -11,6 +11,7 @@
     "ffmpeg": "0.0.4",
     "lodash": "^4.17.5",
     "opusscript": "0.0.6",
+    "require-reload": "^0.2.2",
     "ytdl-core": "^0.20.2"
   }
 }
