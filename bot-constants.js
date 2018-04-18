@@ -17,6 +17,7 @@
         CLEAR_QUEUE: "cl",
         AUTOPLAY: "autoplay",
         AUTOPLAY_THIS: "autoplaythis",
+        AUTOPLAY_OFF: "autoplayoff",
         CHECKED_HISTORY_SIZE: 15,
         SHOW_PLAYED_HISTORY: "playedhistory",
         USE_THIS_TEXT_CHANNEL: "usethistextchannel",

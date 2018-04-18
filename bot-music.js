@@ -155,14 +155,19 @@ var isBotReset;
     };
 
     var showPlayedHistory = function() {
-        let queueString = "Full history:";
-        let no = 0;
+        let no = 0,
+            page = 0,
+            queueStrings = [];
 
         _.each(Controller.ytAudioHistory, function(elem) {
-            queueString += "\n" + ++no + ". " +  elem.snippet.title;
+            if (page % 20 === 0) { page++ }
+            queueString[page] += "\n" + ++no + ". " +  elem.snippet.title;
         });
         
-        return Controller.request.textChannel.send(queueString); 
+        _.each(queueStrings, function(elem) {
+            Controller.request.textChannel.send(elem); 
+        });
+        return Promise.resolve(); 
     }
 
     var useThisTextChannel = function(argObj) {
@@ -176,18 +181,16 @@ var isBotReset;
 
 
     /* PRIVATE METHODS */
-
-    function searchYoutube(searchKeyWords) {
-        searchYoutube(searchKeyWords, false);
-    };
-
     function searchYoutube(searchKeywords, isAutoplayed) {
+        // Allows the 2nd param to be dropped
+        let isAutoPlayed = isAutoplayed ? isAutoplayed : false;
+
         return Promise.try(function() {
             return YoutubeApiCaller.getVideoIdByKeywords(searchKeywords);
         }).then(function(videoId) {
             return YoutubeApiCaller.getVideoWrapperById(videoId);
         }).then(function(retObj) {
-            return Promise.resolve(Controller.pushToQueue(retObj, isAutoplayed));
+            return Promise.resolve(Controller.pushToQueue(retObj));
         });
     };
 
@@ -220,34 +223,30 @@ var isBotReset;
     function playStream() {
         if (Controller.ytAudioQueue.length === 0
             || Controller.isCurrentlyPlaying
-            || isBotReset) {
+            || isBotReset
+            || client.voiceConnections.first() === undefined) {
             return;
         }
 
         
 
         Promise.try(function() {
-            return Controller.shiftQueue();
-        }).then(function(obj) {
-            if (obj === undefined) {
+            if (Controller.shiftQueue() === undefined) {
                 return Promise.reject("end of queue");
             }
-            return Promise.resolve(ytdl(Controller.nowPlaying.id, { filter: 'audioonly' }));
-        }).then(function(stream) {
-            if (client.voiceConnections.first() === undefined) {
-                return;
-            }
+
+            const stream = ytdl(Controller.nowPlaying.id, { filter: 'audioonly' });
+            
             console.log("Streaming audio from " + Controller.nowPlaying.id + " (" + Controller.nowPlaying.snippet.title + ")");
             Controller.dispatcher = client.voiceConnections.first()
             .playStream(stream, { seek: 0, volume: 0.1 })
-            .on('start', () => {
-                console.log("--> Dispatcher started speaking.")
-            })
             .on('speaking', (isSpeaking) => {
                 if (!isSpeaking) {
                     Controller.isCurrentlyPlaying = false;
                     Controller.dispatcher.end();
                     return;
+                } else {
+                    console.log("--> Dispatcher started speaking.");
                 }
             })
             .on('end', (reason) => {
@@ -266,6 +265,9 @@ var isBotReset;
                     });
                 }     
             })
+        })
+        .catch(function(e) {
+            console.log(e);
         });
 
         Controller.isCurrentlyPlaying = true;
