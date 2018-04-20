@@ -14,9 +14,11 @@
     var auth = require("./auth.json");
 var isBotReset;
     /* PUBLIC METHODS */
-    var reset = function() {
+    function reset() {
         return Promise.try(function() {
-            Controller.dispatcher.end(Constants.LEAVE)
+            if (Controller.dispatcher !== {}) {
+                Controller.dispatcher.end(Constants.LEAVE);
+            }
         }).then(function() {
             leave();
             Controller.nowPlaying = {};
@@ -32,7 +34,7 @@ var isBotReset;
         });
     };
 
-    var init = function(argObj) {
+    function init(argObj) {
         Controller.setRequest(argObj.authorId, argObj.channel);
         let vc = Controller.getVoiceChannelByUserId(argObj.authorId);
         if (Controller.currentVoiceChannel && Controller.currentVoiceChannel.name === vc.name) {
@@ -50,7 +52,7 @@ var isBotReset;
     }
 
 
-    var leave = function() {
+    function leave() {
         if (!_.isEmpty(Controller.currentVoiceChannel)) {
             Controller.currentVoiceChannel.leave(Constants.LEAVE);
             let vcName = Controller.currentVoiceChannel.name;
@@ -61,7 +63,7 @@ var isBotReset;
         }  
     }
 
-    var play = function(argObj) {
+    function play(argObj) {
         if (_.isEmpty(Controller.currentVoiceChannel)) {
             init(argObj);
         }
@@ -76,12 +78,12 @@ var isBotReset;
         });
     };
 
-    var skip = function() {
+    function skip() {
         Controller.dispatcher.end();
         return;
     };
 
-    var showQueue = function() {
+    function showQueue() {
         let queueString = "Full queue:";
         let no = 0;
         _.each(Controller.ytAudioQueue, function(elem) {
@@ -90,22 +92,20 @@ var isBotReset;
         Controller.request.textChannel.send(queueString);
         return queueString;
     };
-
-    var resume = function() {
-        //TODO
+    //TODO
+    function resume() {
         if (Controller.dispatcher) {
             Controller.dispatcher.resume();
         }
     };
-
-    var pause = function() {
-        //TODO
+    //TODO
+    function pause() {
         if (Controller.dispatcher) {
             Controller.dispatcher.pause();
         }
     };
 
-    var removeFromQueue = function(args) {
+    function removeFromQueue(args) {
         let index = args[0] - 1;
         if (index => 0 && index < Controller.ytAudioQueue.length) {
             let obj = Controller.ytAudioQueue.splice(index, 1);
@@ -119,17 +119,17 @@ var isBotReset;
         }
     };
 
-    var nowPlaying = function() {
+    function nowPlaying() {
         let embed = EmbedBuilder.getNowPlaying(Controller.nowPlaying);
         Controller.request.textChannel.send({embed});
     };
 
-    var clearQueue = function() {
+    function clearQueue() {
         Controller.ytAudioQueue = [];
         return Controller.request.textChannel.send("Queue cleared.");
     }
 
-    var autoPlay = function(argObj) {
+    function autoPlay(argObj) {
         if (_.isEmpty(Controller.currentVoiceChannel )) {
             init(argObj);
         }
@@ -141,7 +141,7 @@ var isBotReset;
         });
     };
 
-    var autoPlayThis = function() {
+    function autoPlayThis() {
         Controller.isAutoPlayOn = true;
         if (Controller.isCurrentlyPlaying) {
             Controller.autoplayPointer = Controller.nowPlaying;
@@ -150,11 +150,11 @@ var isBotReset;
         }
     }
 
-    var pingTextChannel = function() {
+    function pingTextChannel() {
         Controller.request.textChannel.send("<@" + Controller.request.userId + "> Here I am!");
     };
 
-    var showPlayedHistory = function() {
+    function showPlayedHistory() {
         let no = 0,
             page = 0,
             queueStrings = [];
@@ -170,11 +170,11 @@ var isBotReset;
         return Promise.resolve(); 
     }
 
-    var useThisTextChannel = function(argObj) {
+    function useThisTextChannel(argObj) {
         Controller.setRequest(argObj.authorId, argObj.channel);
     };
 
-    var turnAutoplayOff = function turnAutoplayOff() {
+    function turnAutoplayOff() {
         Controller.isAutoPlayOn = false;
         Controller.autoplayPointer = {};
     };
@@ -182,15 +182,17 @@ var isBotReset;
 
     /* PRIVATE METHODS */
     function searchYoutube(searchKeywords, isAutoplayed) {
-        // Allows the 2nd param to be dropped
-        let isAutoPlayed = isAutoplayed ? isAutoplayed : false;
+        // Allow param to be dropped
+        if (isAutoplayed === undefined) {
+            isAutoplayed = false;
+        }
 
         return Promise.try(function() {
             return YoutubeApiCaller.getVideoIdByKeywords(searchKeywords);
         }).then(function(videoId) {
             return YoutubeApiCaller.getVideoWrapperById(videoId);
         }).then(function(retObj) {
-            return Promise.resolve(Controller.pushToQueue(retObj));
+            return Promise.resolve(Controller.pushToQueue(retObj, isAutoplayed));
         });
     };
 

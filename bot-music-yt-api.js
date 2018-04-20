@@ -14,6 +14,9 @@
             return Promise.try(function() {
                 return bhttp.get(requestUrl);
             }).then(function(response) {
+                if (!response.body.items) {
+                    throw Error("Query returned 0 results.");
+                }
                 return Promise.resolve(response.body.items[index].id.videoId);
             });
         },
@@ -53,7 +56,6 @@
             return Promise.try(function() {
                 return bhttp.get(requestUrl);
             }).then(function(response) {
-                if (!response.body.items.length) { reject("Query returned 0 results.") }
                 return Promise.resolve(response.body.items);
             });
         }
