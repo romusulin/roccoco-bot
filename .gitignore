@@ -27,6 +27,9 @@ build/Release
 node_modules
 jspm_packages
 
+#Distributable files
+dist
+
 # Optional npm cache directory
 .npm
 
@@ -84,3 +87,5 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 auth.json
+
+linux

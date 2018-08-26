@@ -6,12 +6,13 @@
   "author": "romusulin",
   "dependencies": {
     "bhttp": "^1.2.4",
-    "bluebird": "^3.5.1",
-    "discord.js": "^11.3.2",
+    "discord.js": "^11.4.2",
     "ffmpeg": "0.0.4",
-    "lodash": "^4.17.5",
+    "lodash": "^4.17.10",
     "opusscript": "0.0.6",
-    "require-reload": "^0.2.2",
-    "ytdl-core": "^0.20.2"
+    "ytdl-core": "^0.20.4"
+  },
+  "devDependencies": {
+    "typescript": "^3.0.1"
   }
 }

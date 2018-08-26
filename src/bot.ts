@@ -1,20 +1,25 @@
+declare const console;
+declare const require;
+declare const global;
+
+
+
 // Libs
-var Discord = require("discord.js");
-var auth = require("./auth.json");
-var _ = require("lodash");
-var Promise = require("bluebird");
-var reload = require("require-reload");
+import * as Discord from "discord.js";
+var auth = require("../auth.json");
 
 // Imports
-var Constants = require("./bot-constants.js");
-var PrefixManager = require("./bot-prefix.js");
-var MusicManager = require("./bot-music.js");
-var GamesManager = require("./bot-games.js");
-var EmbedBuilder = require("./bot-music-embed");
-// Didscord client
+import { PrefixUtils } from "./bot-prefix";
+import { MusicManagement } from "./bot-music";
+import { Constants } from "./interfaces";
+import { Message, Client } from "discord.js";
+
+// Inits
 const client = new Discord.Client();
-global.client = client;
-global.Discord =  Discord;
+const MusicManager = new MusicManagement();
+
+global.client = <Client> client;
+global.Discord = Discord;
 
 client.login(auth.token);
 
@@ -22,9 +27,9 @@ client.on("ready", () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });
 
-client.on("message", msg => {
-    var argObj = PrefixManager.checkPrefix(msg);
-    if (!argObj.status) {
+client.on("message", (msg: Message) => {
+    var argObj = PrefixUtils.parseMessage(msg);
+    if (!argObj.success) {
         return;
     }
 
@@ -33,8 +38,6 @@ client.on("message", msg => {
     
     if (cmd === Constants.PING) {
         return msg.channel.send("<@" + msg.author.id + "> WSPing:" + client.ping);
-    } else if (cmd === Constants.PREFIX) {
-        return msg.reply(PrefixManager.parseArgs(args));
     } else if (cmd === Constants.JOIN) {
         return msg.channel.send(MusicManager.init(argObj));
     } else if (cmd === Constants.LEAVE) {
@@ -42,11 +45,8 @@ client.on("message", msg => {
     } else if (cmd === Constants.PLAY) {
         MusicManager.play(argObj);
     } else if (cmd === Constants.USE_THIS_TEXT_CHANNEL) {
-        Promise.try(function() {
-            return MusicManager.useThisTextChannel(argObj);
-        }).then(function() {
-            return msg.react("🍆");
-        });
+        MusicManager.useThisTextChannel(argObj);
+        return msg.react("🍆");
     } else if (cmd === Constants.PING_TEXT_CHANNEL) {
         return MusicManager.pingTextChannel();
     } else if (cmd === Constants.SKIP) {
@@ -73,16 +73,11 @@ client.on("message", msg => {
         MusicManager.turnAutoplayOff();
     } else if (cmd === Constants.SHOW_PLAYED_HISTORY) {
         MusicManager.showPlayedHistory();
-    } else if (cmd === Constants.GAME) {
-        GamesManager.rpc(argObj);
     } else if (cmd === Constants.NUDGE) {
-        Promise.try(function() {
+        return new Promise((resolve, reject) => {
             return MusicManager.reset();
         }).then(function() {
             return client.destroy();
-        }).then(function() {
-            MusicManager = reload("./bot-music.js");
-            client.login(auth.token);
         });
     }
 });
