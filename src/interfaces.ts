@@ -1,24 +1,33 @@
 import { TextChannel } from "discord.js";
 
+
+export enum SongId { }
+
 export interface Song {
-    id: string;
+    id: SongId;
+    kind: string;
+    snippet: Snippet;
+    contentDetails: ContentDetails;
+    progressInfo: ProgressInfo;
+}
+
+export interface ProgressInfo {
+
+}
+export interface UnparsedSong {
+    id: {
+        videoId: SongId;
+        kind: string;
+    };
     kind: string;
     snippet: Snippet;
     contentDetails: ContentDetails;
 }
-
-export interface SongRaw {
-    id: string;
-    kind: string;
-    snippet: Snippet;
-    contentDetails: ContentDetails;
-}
-
-
 export interface Snippet {
     title: string;
     description: string;
-    thumbnail: string;
+    thumbnails: any;
+    channelTitle: string;
 }
 
 export interface ContentDetails {
@@ -57,11 +66,12 @@ export enum Constants {
     AUTOPLAY = "autoplay",
     AUTOPLAY_THIS = "autoplaythis",
     AUTOPLAY_OFF = "autoplayoff",
-    CHECKED_HISTORY_SIZE = 15,
-    SHOW_PLAYED_HISTORY = "playedhistory",
+    SHOW_PLAYED_HISTORY = "history",
     USE_THIS_TEXT_CHANNEL = "usethistextchannel",
     PING_TEXT_CHANNEL = "pingtextchannel",
     YOUTUBE_KIND_VIDEO = "youtube#video",
     REMOVE = "rm",
-    NUDGE = "nudge"
+    NUDGE = "nudge",
+    DISPATCHER_EVENT_END = "end",
+    DISPATCHER_EVENT_SPEAKING = "speaking"
 };

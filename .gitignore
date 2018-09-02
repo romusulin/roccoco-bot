@@ -27,8 +27,11 @@ build/Release
 node_modules
 jspm_packages
 
-#Distributable files
+#Distributable and dev related files
 dist
+samples
+bin
+auth.json
 
 # Optional npm cache directory
 .npm
@@ -86,6 +89,5 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
-auth.json
 
 linux
