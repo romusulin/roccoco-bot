@@ -12,171 +12,167 @@ import { Song, SongId, Constants } from "./interfaces";
 import { VoiceConnection, VoiceChannel, StreamDispatcher } from "discord.js";
 
 export class MusicController {
-    private MusicPlayer: MusicPlayer;
-    private MusicQueuer: MusicQueuer;
+	private MusicPlayer: MusicPlayer;
+	private MusicQueuer: MusicQueuer;
 
-    private isPlaying: boolean;
-    private voiceConn: VoiceConnection;
-    private isAutoPlayOn: Boolean;
+	private isPlaying: boolean;
+	private voiceConn: VoiceConnection;
+	private isAutoPlayOn: Boolean;
 
-    streamDispatcherListeners: Function[];
-    
-    constructor() {
-        this.streamDispatcherListeners = [];
-        this.MusicPlayer = new MusicPlayer();
-        this.MusicQueuer = new MusicQueuer();
-        this.isAutoPlayOn = false;
-    }
+	streamDispatcherListeners: Function[];
 
-    get isNowPlaying(): boolean {
-        return Boolean(this.isPlaying);
-    }
+	constructor() {
+		this.streamDispatcherListeners = [];
+		this.MusicPlayer = new MusicPlayer();
+		this.MusicQueuer = new MusicQueuer();
+		this.isAutoPlayOn = false;
+	}
 
-    set isNowPlaying(isPlaying: boolean) {
-        this.isPlaying = isPlaying;
-    }
+	get isNowPlaying(): boolean {
+		return Boolean(this.isPlaying);
+	}
 
-    get currentSong(): Song {
-        return this.MusicQueuer.currentSong;
-    }
+	set isNowPlaying(isPlaying: boolean) {
+		this.isPlaying = isPlaying;
+	}
 
-    get audioQueue(): Song[] {
-        return this.MusicQueuer.audioQueue;
-    }
+	get currentSong(): Song {
+		return this.MusicQueuer.currentSong;
+	}
 
-    get audioHistory(): Song[] {
-        return this.MusicQueuer.audioHistory;
-    }
+	get audioQueue(): Song[] {
+		return this.MusicQueuer.audioQueue;
+	}
 
-    get voiceConnection(): VoiceConnection {
-        return this.voiceConn;
-    }
+	get audioHistory(): Song[] {
+		return this.MusicQueuer.audioHistory;
+	}
 
-    set voiceConnection(vc: VoiceConnection) {
-        this.voiceConn = vc;
-    }
+	get voiceConnection(): VoiceConnection {
+		return this.voiceConn;
+	}
 
-    async setVoiceConnection(voiceChannel: VoiceChannel): Promise<MusicController> {
-        // Check if bot is already in this channel, do nothing and return
-        if (this.voiceConnection &&  this.voiceConnection.channel.name === voiceChannel.name) {
-            return;
-        }
+	async setVoiceConnection(voiceChannel: VoiceChannel): Promise<MusicController> {
+		// Check if bot is already in this channel, do nothing and return
+		if (this.voiceConnection &&  this.voiceConnection.channel.name === voiceChannel.name) {
+			return;
+		}
 
-        try {
-            this.voiceConn = await voiceChannel.join();
-            this.MusicPlayer.setVoiceConnection(this.voiceConn);
-        } catch (error) {
-            throw new Error("Failed joining channel.");
-        }
+		try {
+			this.voiceConn = await voiceChannel.join();
+			this.MusicPlayer.setVoiceConnection(this.voiceConn);
+		} catch (error) {
+			throw new Error("Failed joining channel.");
+		}
 
-        return this;
-    }
+		return this;
+	}
 
-    setIsAutoplayOn(status: boolean): void {
-        this.isAutoPlayOn = status;
-    }
+	setIsAutoplayOn(status: boolean): void {
+		this.isAutoPlayOn = status;
+	}
 
-    autoplayCurrentSong(): void {
-        this.isAutoPlayOn = true;
-        if (this.isPlaying) {
-            this.MusicQueuer.autoplayCurrentSong();
-        }
-    }
+	autoplayCurrentSong(): void {
+		this.isAutoPlayOn = true;
+		if (this.isPlaying) {
+			this.MusicQueuer.autoplayCurrentSong();
+		}
+	}
 
-    removeIndex(index: number): Song {
-        return this.MusicQueuer.remove(index);
-    }
-    
-    clearQueue(): number {
-        return this.MusicQueuer.clearQueue();
-    }
+	removeIndex(index: number): Song {
+		return this.MusicQueuer.remove(index);
+	}
 
-    leaveVoiceChannel() {
-        //this.MusicPlayer.streamDispatcher.pause();
-        this.voiceConn.channel.leave();
-        this.voiceConnection = <VoiceConnection> undefined;
-    }
+	clearQueue(): number {
+		return this.MusicQueuer.clearQueue();
+	}
 
-    async pushToQueue(searchKeywords: string[], isAutoplayed: boolean): Promise<Song> {
-        const song = await YoutubeApiCaller.getVideoWrapperByKeywords(searchKeywords);
-        if (!this.isAutoPlayOn) {
-            this.setIsAutoplayOn(isAutoplayed);
-        }
+	leaveVoiceChannel(): void {
+		//this.MusicPlayer.streamDispatcher.pause();
+		this.voiceConn.channel.leave();
+		this.voiceConn = <VoiceConnection> undefined;
+	}
 
-        return this.MusicQueuer.push(song, isAutoplayed);
-    }
+	async pushToQueue(searchKeywords: string[], isAutoplayed: boolean): Promise<Song> {
+		const song = await YoutubeApiCaller.getVideoWrapperByKeywords(searchKeywords);
+		if (!this.isAutoPlayOn) {
+			this.setIsAutoplayOn(isAutoplayed);
+		}
 
-    async findNewRelatedSong() {        
-        const songIds: SongId[] = await YoutubeApiCaller.getRelatedVideoIds(this.MusicQueuer.autoplayPointer.id);
+		return this.MusicQueuer.push(song, isAutoplayed);
+	}
 
-        let id: SongId = songIds.find((songId: SongId) => {
-            if (!songId) {
-                return false;
-            }
-            
-            let checkedIncrement: number = 0;
-            let isValidSong: boolean = true;
+	private async pushNewRelatedSong(): Promise<Song> {
+		const songIds: SongId[] = await YoutubeApiCaller.getRelatedVideoIds(this.MusicQueuer.autoplayPointer.id);
 
-            const playedHistory = this.MusicQueuer.audioHistory;
-            // If song was already played, try finding next one
-            for (let i = playedHistory.length; i > 0; i--) {
-                const playedSong = playedHistory[i];
+		const id: SongId = songIds.find((songId: SongId) => {
+			if (!songId) {
+				return false;
+			}
 
-                if (checkedIncrement++ >= Settings.HistoryDepthCheck) break;
-                if (playedSong === undefined) continue;
-                if (songId === playedSong.id) isValidSong =  false;
-            }
+			let checkedIncrement: number = 0;
+			let isValidSong: boolean = true;
 
-            return isValidSong;
-        });
+			const playedHistory = this.MusicQueuer.audioHistory;
+			// If song was already played, try finding next one
+			for (let i = playedHistory.length; i > 0; i--) {
+				const playedSong = playedHistory[i];
 
-        const song: Song = await YoutubeApiCaller.getVideoWrapperById(id);
+				if (checkedIncrement++ >= Settings.HistoryDepthCheck) break;
+				if (playedSong === undefined) continue;
+				if (songId === playedSong.id) isValidSong =  false;
+			}
 
-        return this.MusicQueuer.push(song, true);  
-    }
+			return isValidSong;
+		});
+
+		const song: Song = await YoutubeApiCaller.getVideoWrapperById(id);
+
+		return this.MusicQueuer.push(song, true);
+	}
 
 
-    async play(): Promise<StreamDispatcher> {
-        if (this.isPlaying) {
-            return;
-        }
+	async play(): Promise<StreamDispatcher> {
+		if (this.isPlaying) {
+			return;
+		}
 
-        let song: Song = this.MusicQueuer.getNextSong();
+		let song: Song = this.MusicQueuer.getNextSong();
 
-        if (!song && this.isAutoPlayOn) {
-            // Queue is empty, find related song if autoplay is on
-            await this.findNewRelatedSong();
-            song = this.MusicQueuer.getNextSong();
-        }
+		if (!song && this.isAutoPlayOn) {
+			// Queue is empty, find related song if autoplay is on
+			await this.pushNewRelatedSong();
+			song = this.MusicQueuer.getNextSong();
+		}
 
-        if (!song || !song.id) {
-            return;
-        }
+		if (!song || !song.id) {
+			return;
+		}
 
-        
-        return this.MusicPlayer.getStream(song.id)
-        .on(Constants.DISPATCHER_EVENT_SPEAKING, (isSpeaking) => {
-            this.isPlaying = !!isSpeaking;
-            if (isSpeaking) {
-                console.log(`--> Dispatcher started speaking: ${song.snippet.title}#${song.id}`);
-                for (let func of this.streamDispatcherListeners) {
-                    func(isSpeaking);
-                }
-            } else {
-                console.log("--> Dispatcher stopped speaking.");
-            } 
-        })
-        .on(Constants.DISPATCHER_EVENT_END, (reason: string) => {
-            // Passing the functions as FCC would result in wrong context when executing
-            this.isPlaying = false;
-            if (reason !== Constants.LEAVE) {
-                this.play();
-            }
-        });
-    }
 
-    skip() { 
-        console.log(`Skipping song: ${this.currentSong.snippet.title}`);
-        this.MusicPlayer.streamDispatcher.end(Constants.SKIP);
-    }
+		return this.MusicPlayer.getStream(song.id)
+		.on(Constants.DISPATCHER_EVENT_SPEAKING, (isSpeaking) => {
+			this.isPlaying = !!isSpeaking;
+			if (isSpeaking) {
+				console.log(`--> Dispatcher started speaking: ${song.snippet.title}#${song.id}`);
+				for (const func of this.streamDispatcherListeners) {
+					func(isSpeaking);
+				}
+			} else {
+				console.log("--> Dispatcher stopped speaking.");
+			}
+		})
+		.on(Constants.DISPATCHER_EVENT_END, (reason: string) => {
+			// Passing the functions as FCC would result in wrong context when executing
+			this.isPlaying = false;
+			if (reason !== Constants.LEAVE) {
+				this.play();
+			}
+		});
+	}
+
+	skip(): void {
+		console.log(`Skipping song: ${this.currentSong.snippet.title}`);
+		this.MusicPlayer.streamDispatcher.end(Constants.SKIP);
+	}
 }

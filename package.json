@@ -10,9 +10,10 @@
     "ffmpeg": "0.0.4",
     "lodash": "^4.17.10",
     "opusscript": "0.0.6",
-    "ytdl-core": "^0.20.4"
+    "ytdl-core": "^0.25.1"
   },
   "devDependencies": {
-    "typescript": "^3.0.1"
+    "@types/lodash": "^4.14.116",
+    "typescript": "^3.0.3"
   }
 }

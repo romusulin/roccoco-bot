@@ -7,25 +7,24 @@ import { Settings } from "./settings";
 import { SongId } from "./interfaces";
 
 export class MusicPlayer {
-    private voiceConnection: VoiceConnection;
-    streamDispatcher: StreamDispatcher;
-    progressInfo: any;
+	private voiceConnection: VoiceConnection;
+	streamDispatcher: StreamDispatcher;
+	progressInfo: any;
 
-    setVoiceConnection(vc: VoiceConnection) {
-        this.voiceConnection = vc;
-    }
+	setVoiceConnection(vc: VoiceConnection) {
+		this.voiceConnection = vc;
+	}
 
-    getProgressInfo() {
-        return this.progressInfo;
-    }
+	getProgressInfo() {
+		// WIP
+		return this.progressInfo;
+	}
 
-    getStream(songId: SongId): StreamDispatcher {
-        const stream = ytdl(String(songId), { filter: 'audioonly' })
-        .on("progress", (response) => {
-            this.progressInfo = response;
-        });
-        this.streamDispatcher = this.voiceConnection.playStream(stream, Settings.StreamDispatcherOptions); 
+	getStream(songId: SongId): StreamDispatcher {
+		const stream = ytdl(String(songId), { filter: 'audioonly', quality: "highestaudio" });
 
-        return this.streamDispatcher;
-    }
+		this.streamDispatcher = this.voiceConnection.playStream(stream, Settings.StreamDispatcherOptions);
+
+		return this.streamDispatcher;
+	}
 }

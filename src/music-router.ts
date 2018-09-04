@@ -3,106 +3,119 @@ import * as _ from "lodash";
 
 //Imports
 import { MusicController } from "./music-ctrl";
-import { ArgumentPassObject, Song } from "./interfaces";
+import { ArgumentPassObject, Song, Constants } from "./interfaces";
 import { Utils } from "./utils";
 import { ChatLogger } from "./chat-loggers";
 
 export class MusicRouter {
-    Controller: MusicController;
-    Messager: ChatLogger;
-    
-    async init(argObj: ArgumentPassObject): Promise<void> {
-        this.Messager = new ChatLogger();
-        this.Messager.textChannel = argObj.channel;
+	Controller: MusicController;
+	Messager: ChatLogger;
 
-        await this.Controller.setVoiceConnection(await Utils.getVoiceChannelByUserId(argObj.authorId));
+	 async init(argObj: ArgumentPassObject): Promise<void> {
+		this.Messager = new ChatLogger();
+		this.Messager.textChannel = argObj.channel;
 
-        this.Controller.streamDispatcherListeners.push((isSpeaking) => {
-            if (isSpeaking) {
-                this.Messager.sendNowStartedPlaying(this.Controller.currentSong);
-            }
-        });
-    }
+		await this.Controller.setVoiceConnection(await Utils.getVoiceChannelByUserId(argObj.authorId));
 
-    nowPlaying() {
-        this.Messager.sendTextMessage(`Skipping song: ${this.Controller.currentSong.snippet.title}`);
-    }
+		this.Controller.streamDispatcherListeners.push((isSpeaking) => {
+			if (isSpeaking) {
+				this.Messager.sendNowStartedPlaying(this.Controller.currentSong);
+			}
+		});
+	}
 
-    clearQueue() {
-        const noOfRemovedSongs: number = this.Controller.clearQueue();
-        this.Messager.sendTextMessage(`Queue cleared.\nRemoved ${noOfRemovedSongs} song${(noOfRemovedSongs > 1 ? "s" : "")}.`);
-    }
+	nowPlaying(): void {
+		this.Messager.sendTextMessage(`Skipping song: ${this.Controller.currentSong.snippet.title}`);
+	}
 
-    autoplayCurrentSong() {
-        this.Controller.autoplayCurrentSong();
-        this.Messager.sendChangedAutoplayPointer(this.Controller.currentSong);
-    }
+	clearQueue(): void {
+		const noOfRemovedSongs: number = this.Controller.clearQueue();
+		this.Messager.sendTextMessage(`Queue cleared.\nRemoved ${noOfRemovedSongs} song ${(noOfRemovedSongs > 1 ? "s" : "")}.`);
+	}
 
-    useThisTextChannel(argObj) {
-        this.Messager.textChannel = argObj.channel;
-    }
+	autoplayCurrentSong(): void {
+		this.Controller.autoplayCurrentSong();
+		this.Messager.sendChangedAutoplayPointer(this.Controller.currentSong);
+	}
 
-    turnAutoplayOff() {
-         this.Controller.setIsAutoplayOn(false);
-         this.Messager.sendMessage("Autoplay is turned off");
-    }
+	useThisTextChannel(argObj: ArgumentPassObject): void {
+		this.Messager.textChannel = argObj.channel;
+		argObj.message.react("🍆");
+	}
 
-    skip() {
-        this.Controller.skip();
-    }
+	turnAutoplayOff(): void {
+		 this.Controller.setIsAutoplayOn(false);
+		 this.Messager.sendMessage("Autoplay is turned off");
+	}
 
-    leave() {
-        if (!_.isEmpty(this.Controller.voiceConnection)) {
-            this.Controller.leaveVoiceChannel();
-        }
-    }
+	skip(): void {
+		this.Controller.skip();
+	}
 
-    async play(argObj: ArgumentPassObject, isAutoplay: boolean) {
-        const enqueuedSong: Song = await this.Controller.pushToQueue(argObj.args, isAutoplay);
-        if (this.Controller.isNowPlaying) {
-            this.Messager.sendEnqueuedSong(enqueuedSong);
-        } else {
-            this.Controller.play();
-        }
-    };
-    
-    removeFromQueue(args) {
-        let index: number = args[0] - 1;
-        try {
-            const removedSong: Song = this.Controller.removeIndex(index);
-            this.Messager.sendRemovedSong(removedSong);
-        } catch (error) {
-            this.Messager.sendMessage(error.message);
-        }
-    }
-    
-    showPlayedHistory() {
-        const queue: Song[] = this.Controller.audioHistory;
-        let message: string = "";
-        let i: number = 1;
+	leave(): void {
+		if (!_.isEmpty(this.Controller.voiceConnection)) {
+			this.Controller.leaveVoiceChannel();
+		}
+	}
 
-        for (let song of queue) {
-            message += `${i++}. ${song.snippet.title} | ${song.contentDetails.duration} | From: ${song.snippet.channelTitle}`;
+	async play(argObj: ArgumentPassObject, isAutoplay: boolean): Promise<void> {
+		let enqueuedSong: Song;
+		try {
+			enqueuedSong = await this.Controller.pushToQueue(argObj.args, isAutoplay);
+		} catch (err) {
+			this.Messager.sendMessage(`Exception occured during enqueueing: ${err.message}`);
+		}
+		if (this.Controller.isNowPlaying) {
+			this.Messager.sendEnqueuedSong(enqueuedSong);
+		} else {
+			this.Controller.play();
+		}
+	}
 
-            if (i === queue.length || (i > 0 && i % 100 === 0)) {
-                this.Messager.sendTextMessage(message);
-                message = "";
-            }
-        }
-    }
+	removeFromQueue(args): void {
+		const index: number = args[0] - 1;
+		try {
+			const removedSong: Song = this.Controller.removeIndex(index);
+			this.Messager.sendRemovedSong(removedSong);
+		} catch (error) {
+			this.Messager.sendMessage(error.message);
+		}
+	}
 
-    showQueue() {
-        const queue: Song[] = this.Controller.audioQueue;
-        let message: string = "";
-        let i: number = 1;
 
-        for (let song of queue) {
-            message += `${i}. ${song.snippet.title} | ${song.contentDetails.duration}`;
+	outputSongArray(songArray: Song[]): void {
+		let message: string = "";
+		let i: number = 1;
 
-            if (i === queue.length || (i > 0 && i % 100 === 0)) {
-                this.Messager.sendTextMessage(message);
-                message = "";
-            }
-        }
-    }
+		// use string builder class here
+
+		for (let song of songArray) {
+			message += `${i++}. ${song.snippet.title} | ${song.contentDetails.duration} | From: ${song.snippet.channelTitle}\n`;
+
+			if (i === songArray.length || (i > 0 && i % 100 === 0)) {
+				this.Messager.sendTextMessage(message);
+				message = "";
+			}
+		}
+	}
+
+	showPlayedHistory(): void {
+		const playedSongs: Song[] = this.Controller.audioHistory;
+		if (!playedSongs.length) {
+			this.Messager.sendTextMessage("Audio history is empty.");
+			return;
+		}
+
+		this.outputSongArray(playedSongs);
+	}
+
+	showQueue(): void {
+		const queue: Song[] = this.Controller.audioQueue;
+		if (!queue.length) {
+			this.Messager.sendTextMessage("Queue is empty.");
+			return;
+		}
+
+		this.outputSongArray(queue);
+	}
 }
