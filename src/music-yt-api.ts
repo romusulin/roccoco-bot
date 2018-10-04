@@ -8,6 +8,7 @@ import * as bhttp from "bhttp";
 import { Constants, Song, SongId } from "./interfaces";
 
 export class YoutubeApiCaller {
+	// TODO interface http response
 	private static async getVideoIdByKeywords(searchKeywords: string[], index: number = 0): Promise<SongId> {
 		const searchQuery: string = searchKeywords.join(" ");
 		let requestUrl = `https://www.googleapis.com/youtube/v3/search?part=id&q=${searchQuery}&key=${auth.youtube_api_key}`;

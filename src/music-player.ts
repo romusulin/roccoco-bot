@@ -21,7 +21,7 @@ export class MusicPlayer {
 	}
 
 	getStream(songId: SongId): StreamDispatcher {
-		const stream = ytdl(String(songId), { filter: 'audioonly', quality: "highestaudio" });
+		const stream = ytdl(songId, { filter: 'audioonly', quality: "highestaudio" });
 
 		this.streamDispatcher = this.voiceConnection.playStream(stream, Settings.StreamDispatcherOptions);
 

@@ -8,7 +8,7 @@ import { Settings } from "./settings";
 import { MusicPlayer } from "./music-player";
 import { MusicQueuer } from "./music-queuer";
 import { YoutubeApiCaller } from "./music-yt-api";
-import { Song, SongId, Constants } from "./interfaces";
+import { Song, SongId, Constants, Commands } from "./interfaces";
 import { VoiceConnection, VoiceChannel, StreamDispatcher } from "discord.js";
 
 export class MusicController {
@@ -19,10 +19,9 @@ export class MusicController {
 	private voiceConn: VoiceConnection;
 	private isAutoPlayOn: Boolean;
 
-	streamDispatcherListeners: Function[];
+	streamDispatcherListener: Function;
 
 	constructor() {
-		this.streamDispatcherListeners = [];
 		this.MusicPlayer = new MusicPlayer();
 		this.MusicQueuer = new MusicQueuer();
 		this.isAutoPlayOn = false;
@@ -115,8 +114,8 @@ export class MusicController {
 
 			const playedHistory = this.MusicQueuer.audioHistory;
 			// If song was already played, try finding next one
-			for (let i = playedHistory.length; i > 0; i--) {
-				const playedSong = playedHistory[i];
+			for (let i = playedHistory.length - 1; i >= 0; i--) {
+				const playedSong = playedHistory[i]; 
 
 				if (checkedIncrement++ >= Settings.HistoryDepthCheck) break;
 				if (playedSong === undefined) continue;
@@ -155,9 +154,7 @@ export class MusicController {
 			this.isPlaying = !!isSpeaking;
 			if (isSpeaking) {
 				console.log(`--> Dispatcher started speaking: ${song.snippet.title}#${song.id}`);
-				for (const func of this.streamDispatcherListeners) {
-					func(isSpeaking);
-				}
+				this.streamDispatcherListener(isSpeaking);
 			} else {
 				console.log("--> Dispatcher stopped speaking.");
 			}
@@ -165,14 +162,22 @@ export class MusicController {
 		.on(Constants.DISPATCHER_EVENT_END, (reason: string) => {
 			// Passing the functions as FCC would result in wrong context when executing
 			this.isPlaying = false;
-			if (reason !== Constants.LEAVE) {
+			if (reason !== Commands.LEAVE) {
 				this.play();
 			}
 		});
 	}
 
-	skip(): void {
+	async skip(): Promise<void> {
 		console.log(`Skipping song: ${this.currentSong.snippet.title}`);
-		this.MusicPlayer.streamDispatcher.end(Constants.SKIP);
+		return new Promise<void>((resolve) => {
+			this.MusicPlayer.streamDispatcher.once(Constants.DISPATCHER_EVENT_SPEAKING, (isSpeaking) => {
+				if (!isSpeaking) {
+					console.log("resolving");
+					resolve();
+				}
+			});
+			this.MusicPlayer.streamDispatcher.end(Commands.SKIP);
+		});
 	}
 }

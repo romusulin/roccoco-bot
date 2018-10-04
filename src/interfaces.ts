@@ -1,7 +1,7 @@
 import { TextChannel, Message } from "discord.js";
 
 
-export enum SongId { }
+export type SongId = string;
 
 export interface Song {
 	id: SongId;
@@ -48,31 +48,29 @@ export interface ArgumentPassObject {
 	message?: Message
 }
 
-export enum Constants {
-	PREFIX = "prefix",
-	PING = "ping",
+export enum Commands {
 	PLAY = "play",
 	JOIN = "join",
 	LEAVE = "leave",
 	SKIP = "skip",
 	QUEUE = "queue",
+	AUTOPLAY_THIS = "autoplaythis",
+	AUTOPLAY_OFF = "autoplayoff",
+	USE_THIS_TEXT_CHANNEL = "usethistextchannel",
+	NOW_PLAYING = "np",
+	CLEAR_QUEUE = "cl",
+	AUTOPLAY = "autoplay",
+	REMOVE = "rm",
+	SHOW_PLAYED_HISTORY = "history",
+}
+
+export enum Constants {
+	PREFIX = "prefix",
 	CHANNEL_TYPE_VOICE = "voice",
 	CHANNEL_TYPE_TEXT = "text",
 	PAUSE = "pause",
 	RESUME = "resume",
-	SHUT_DOWN = "shutdown",
-	GAME = "game",
-	NOW_PLAYING = "np",
-	CLEAR_QUEUE = "cl",
-	AUTOPLAY = "autoplay",
-	AUTOPLAY_THIS = "autoplaythis",
-	AUTOPLAY_OFF = "autoplayoff",
-	SHOW_PLAYED_HISTORY = "history",
-	USE_THIS_TEXT_CHANNEL = "usethistextchannel",
-	PING_TEXT_CHANNEL = "pingtextchannel",
 	YOUTUBE_KIND_VIDEO = "youtube#video",
-	REMOVE = "rm",
-	NUDGE = "nudge",
 	DISPATCHER_EVENT_END = "end",
 	DISPATCHER_EVENT_SPEAKING = "speaking"
 };

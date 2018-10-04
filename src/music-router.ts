@@ -1,36 +1,74 @@
+declare const client;
+declare const console;
+
 // Libs
 import * as _ from "lodash";
 
 //Imports
 import { MusicController } from "./music-ctrl";
-import { ArgumentPassObject, Song, Constants } from "./interfaces";
+import { ArgumentPassObject, Song, Constants, Commands } from "./interfaces";
 import { Utils } from "./utils";
 import { ChatLogger } from "./chat-loggers";
+import { TaskExecutorBuilder } from "./task-executor";
 
 export class MusicRouter {
 	Controller: MusicController;
 	Messager: ChatLogger;
+	TaskExecutor: TaskExecutorBuilder;
+
+	constructor() {
+		this.Messager = new ChatLogger();
+		this.Controller = new MusicController();
+
+		this.TaskExecutor = new TaskExecutorBuilder(this)
+		.register(Commands.JOIN, this.init)
+		.register(Commands.LEAVE, this.leave)
+		.register(Commands.PLAY, this.play)
+		.register(Commands.AUTOPLAY, this.play)
+		.register(Commands.USE_THIS_TEXT_CHANNEL, this.useThisTextChannel)
+		.register(Commands.SKIP, this.skip)
+		.register(Commands.QUEUE, this.showQueue)
+		.register(Commands.NOW_PLAYING, this.nowPlaying)
+		.register(Commands.CLEAR_QUEUE, this.clearQueue)
+		.register(Commands.REMOVE, this.removeFromQueue)
+		.register(Commands.AUTOPLAY_THIS, this.autoplayCurrentSong)
+		.register(Commands.AUTOPLAY_OFF, this.turnAutoplayOff)
+		.register(Commands.SHOW_PLAYED_HISTORY, this.showPlayedHistory);
+	}
+
+	async execute(argObj: ArgumentPassObject): Promise<void> {
+		if (!this.Controller || !this.Controller.voiceConnection) {
+			await this.init(argObj);
+		}
+
+		console.log("start");
+		const cmd: string = argObj.cmd;
+		await this.TaskExecutor.add(cmd, argObj);
+		console.log("finish");
+	}
 
 	 async init(argObj: ArgumentPassObject): Promise<void> {
-		this.Messager = new ChatLogger();
 		this.Messager.textChannel = argObj.channel;
 
 		await this.Controller.setVoiceConnection(await Utils.getVoiceChannelByUserId(argObj.authorId));
 
-		this.Controller.streamDispatcherListeners.push((isSpeaking) => {
+		this.Controller.streamDispatcherListener = (isSpeaking) => {
 			if (isSpeaking) {
 				this.Messager.sendNowStartedPlaying(this.Controller.currentSong);
+				client.user.setActivity(this.Controller.currentSong.snippet.title);
 			}
-		});
+		};
+
+		return;
 	}
 
 	nowPlaying(): void {
-		this.Messager.sendTextMessage(`Skipping song: ${this.Controller.currentSong.snippet.title}`);
+		this.Messager.sendNowStartedPlaying(this.Controller.currentSong);
 	}
 
 	clearQueue(): void {
 		const noOfRemovedSongs: number = this.Controller.clearQueue();
-		this.Messager.sendTextMessage(`Queue cleared.\nRemoved ${noOfRemovedSongs} song ${(noOfRemovedSongs > 1 ? "s" : "")}.`);
+		this.Messager.sendTextMessage(`Queue cleared.\nRemoved ${noOfRemovedSongs} song ${(noOfRemovedSongs !== 1 ? "s" : "")}.`);
 	}
 
 	autoplayCurrentSong(): void {
@@ -44,12 +82,12 @@ export class MusicRouter {
 	}
 
 	turnAutoplayOff(): void {
-		 this.Controller.setIsAutoplayOn(false);
-		 this.Messager.sendMessage("Autoplay is turned off");
+		this.Controller.setIsAutoplayOn(false);
+		this.Messager.sendMessage("Autoplay is turned off");
 	}
 
-	skip(): void {
-		this.Controller.skip();
+	skip(): Promise<void> {
+		return this.Controller.skip();
 	}
 
 	leave(): void {
@@ -58,7 +96,9 @@ export class MusicRouter {
 		}
 	}
 
-	async play(argObj: ArgumentPassObject, isAutoplay: boolean): Promise<void> {
+	async play(argObj: ArgumentPassObject): Promise<void> {
+		const isAutoplay = argObj.cmd === Commands.AUTOPLAY ? true : false;
+
 		let enqueuedSong: Song;
 		try {
 			enqueuedSong = await this.Controller.pushToQueue(argObj.args, isAutoplay);
@@ -70,6 +110,8 @@ export class MusicRouter {
 		} else {
 			this.Controller.play();
 		}
+
+		return;
 	}
 
 	removeFromQueue(args): void {
