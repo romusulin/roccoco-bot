@@ -41,7 +41,7 @@ export interface Request {
 
 export interface ArgumentPassObject {
 	success: boolean;
-	cmd?: string;
+	command?: string;
 	args?: string[];
 	channel?: TextChannel;
 	authorId?: string;

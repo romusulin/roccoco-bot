@@ -22,7 +22,7 @@ export class Utils {
 			var allArgs = sourceMsg.substring(Settings.CommandPrefix.length).split(" ");
 
 			retObj.success = true;
-			retObj.cmd = allArgs[0];
+			retObj.command = allArgs[0];
 			retObj.args = allArgs.splice(1);
 			retObj.channel = msg.channel;
 			retObj.authorId = msg.author.id;

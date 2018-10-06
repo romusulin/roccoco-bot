@@ -41,10 +41,7 @@ export class MusicRouter {
 			await this.init(argObj);
 		}
 
-		console.log("start");
-		const cmd: string = argObj.cmd;
-		await this.TaskExecutor.add(cmd, argObj);
-		console.log("finish");
+		await this.TaskExecutor.execute(argObj);
 	}
 
 	 async init(argObj: ArgumentPassObject): Promise<void> {
@@ -97,7 +94,7 @@ export class MusicRouter {
 	}
 
 	async play(argObj: ArgumentPassObject): Promise<void> {
-		const isAutoplay = argObj.cmd === Commands.AUTOPLAY ? true : false;
+		const isAutoplay = argObj.command === Commands.AUTOPLAY ? true : false;
 
 		let enqueuedSong: Song;
 		try {
@@ -105,6 +102,7 @@ export class MusicRouter {
 		} catch (err) {
 			this.Messager.sendMessage(`Exception occured during enqueueing: ${err.message}`);
 		}
+
 		if (this.Controller.isNowPlaying) {
 			this.Messager.sendEnqueuedSong(enqueuedSong);
 		} else {
