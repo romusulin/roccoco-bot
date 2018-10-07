@@ -51,7 +51,7 @@ export class YoutubeApiCaller {
 		const body = response.body;
 
 		if (body.items.length === 0) {
-			throw Error("Query returned 0 results.");
+			throw Error(`Query returned 0 results for #${songId}`);
 		}
 
 		const item = body.items[0];
