@@ -115,7 +115,7 @@ export class MusicController {
 			const playedHistory = this.MusicQueuer.audioHistory;
 			// If song was already played, try finding next one
 			for (let i = playedHistory.length - 1; i >= 0; i--) {
-				const playedSong = playedHistory[i]; 
+				const playedSong = playedHistory[i];
 
 				if (checkedIncrement++ >= Settings.HistoryDepthCheck) break;
 				if (playedSong === undefined) continue;
@@ -150,7 +150,7 @@ export class MusicController {
 
 
 		return this.MusicPlayer.getStream(song.id)
-		.on(Constants.DISPATCHER_EVENT_SPEAKING, (isSpeaking) => {
+		.once(Constants.DISPATCHER_EVENT_SPEAKING, (isSpeaking) => {
 			this.isPlaying = !!isSpeaking;
 			if (isSpeaking) {
 				console.log(`--> Dispatcher started speaking: ${song.snippet.title}#${song.id}`);
@@ -159,7 +159,7 @@ export class MusicController {
 				console.log("--> Dispatcher stopped speaking.");
 			}
 		})
-		.on(Constants.DISPATCHER_EVENT_END, (reason: string) => {
+		.once(Constants.DISPATCHER_EVENT_END, (reason: string) => {
 			// Passing the functions as FCC would result in wrong context when executing
 			this.isPlaying = false;
 			if (reason !== Commands.LEAVE) {
@@ -173,7 +173,6 @@ export class MusicController {
 		return new Promise<void>((resolve) => {
 			this.MusicPlayer.streamDispatcher.once(Constants.DISPATCHER_EVENT_SPEAKING, (isSpeaking) => {
 				if (!isSpeaking) {
-					console.log("resolving");
 					resolve();
 				}
 			});
