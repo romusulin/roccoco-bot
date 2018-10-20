@@ -6,7 +6,7 @@ import * as _ from "lodash";
 
 //Imports
 import { MusicController } from "./music-ctrl";
-import { ArgumentPassObject, Song, Constants, Commands } from "./interfaces";
+import { ArgumentPassObject, Song, Commands } from "./interfaces";
 import { Utils } from "./utils";
 import { ChatLogger } from "./chat-loggers";
 import { TaskExecutorBuilder } from "./task-executor";

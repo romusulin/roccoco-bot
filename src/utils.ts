@@ -7,7 +7,7 @@ declare const client;
 export class Utils {
 	static getVoiceChannelByUserId(userId: string): VoiceChannel {
 		return client.channels.find(x => {
-			return x['members'].keyArray().includes(String(userId))
+			return x['members'] && x['members'].keyArray().includes(String(userId))
 				&& x.type === Constants.CHANNEL_TYPE_VOICE;
 		});
 	}
@@ -24,7 +24,8 @@ export class Utils {
 			retObj.success = true;
 			retObj.command = allArgs[0];
 			retObj.args = allArgs.splice(1);
-			retObj.channel = msg.channel;
+			retObj.guildId = msg.guild.id;
+			retObj.channel = <TextChannel> msg.channel;
 			retObj.authorId = msg.author.id;
 			retObj.message = msg;
 		}
