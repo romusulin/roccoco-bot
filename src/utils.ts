@@ -1,4 +1,4 @@
-import { VoiceChannel } from "discord.js";
+import { VoiceChannel, TextChannel } from "discord.js";
 import { Constants, ArgumentPassObject } from "./interfaces";
 import { Settings } from "./settings";
 
