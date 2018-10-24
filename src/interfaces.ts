@@ -41,7 +41,6 @@ export interface Request {
 export interface ArgumentPassObject {
 	success: boolean;
 	command?: string;
-	flags?: Map<Flag, string>;
 	guildId?: Snowflake;
 	args?: string[];
 	channel?: TextChannel;
