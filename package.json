@@ -1,7 +1,7 @@
 {
-  "name": "roko",
+  "name": "RoccocoBot",
   "version": "1.0.0",
-  "description": "Bot za bolje sutra.",
+  "description": "Discord Music Autoplay Bot",
   "main": "bot.js",
   "author": "romusulin",
   "dependencies": {
