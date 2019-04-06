@@ -1,5 +1,5 @@
 {
-  "name": "RoccocoBot",
+  "name": "roccoco-bot",
   "version": "1.0.0",
   "description": "Discord Music Autoplay Bot",
   "main": "bot.js",
@@ -10,11 +10,18 @@
     "ffmpeg": "0.0.4",
     "lodash": "^4.17.10",
     "node-opus": "^0.3.0",
-    "npm": "^6.4.1",
+    "npm": "^6.9.0",
     "ytdl-core": "^0.25.1"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.116",
     "typescript": "^3.0.3"
+  },
+  "scripts": {
+    "compile": "tsc -p tsconfig.json",
+    "run": "node dist/bot.js"
+  },
+  "engines": {
+    "node:": "10.15.3"
   }
 }
