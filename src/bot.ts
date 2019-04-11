@@ -6,7 +6,7 @@ var auth = require("../auth.json");
 
 import * as Discord from "discord.js";
 import { Utils } from "./utils";
-import { MusicRouter } from "./music-router";
+import { MusicRouter } from "./router";
 import { Message, Client, Snowflake } from "discord.js";
 import { ArgumentPassObject } from "./interfaces";
 

@@ -2,10 +2,10 @@ declare const client;
 declare const console;
 
 //Imports
-import { MusicController } from "./music-ctrl";
+import { MusicController } from "./music/controller";
 import { ArgumentPassObject, Song, Commands } from "./interfaces";
 import { Utils } from "./utils";
-import { ChatLogger } from "./chat-loggers";
+import { ChatLogger } from "./chat/logger";
 import { TaskExecutorBuilder } from "./task-executor";
 
 export class MusicRouter {

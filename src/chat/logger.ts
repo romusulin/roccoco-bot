@@ -1,6 +1,6 @@
 import { TextChannel, RichEmbed } from "discord.js";
 import { EmbedBuilder } from "./embed-builder";
-import { Song } from "./interfaces";
+import { Song } from "../interfaces";
 
 export class ChatLogger {
 	isEnabled: boolean;

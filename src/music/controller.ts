@@ -1,10 +1,10 @@
 declare const console;
 
-import { Settings } from "./settings";
-import { MusicPlayer } from "./music-player";
-import { MusicQueuer } from "./music-queuer";
+import { Settings } from "../settings";
+import { MusicPlayer } from "./player";
+import { MusicQueuer } from "./queuer";
 import { YoutubeApiCaller } from "./music-yt-api";
-import { Song, SongId, Constants, Commands } from "./interfaces";
+import { Song, SongId, Constants, Commands } from "../interfaces";
 import { VoiceConnection, VoiceChannel, StreamDispatcher } from "discord.js";
 
 export class MusicController {

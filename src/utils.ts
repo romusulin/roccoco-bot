@@ -1,4 +1,4 @@
-import { VoiceChannel, TextChannel } from "discord.js";
+import { VoiceChannel, TextChannel, Message } from "discord.js";
 import { Constants, ArgumentPassObject } from "./interfaces";
 import { Settings } from "./settings";
 
@@ -12,7 +12,7 @@ export class Utils {
 		});
 	}
 
-	static parseMessage(msg): ArgumentPassObject {
+	static parseMessage(msg: Message): ArgumentPassObject {
 		let sourceMsg = msg.content;
 		var retObj: ArgumentPassObject = {
 			success: false

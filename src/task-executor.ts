@@ -2,7 +2,7 @@
 declare const console;
 
 import { ArgumentPassObject, Commands } from "./interfaces";
-import { MusicRouter } from "./music-router";
+import { MusicRouter } from "./router";
 
 export class TaskExecutorBuilder {
 	private functionMap: TaskExecutorMap;

@@ -1,4 +1,4 @@
-import { Song } from "./interfaces";
+import { Song } from "../interfaces";
 import { RichEmbed } from "discord.js";
 
 declare const Discord: any;

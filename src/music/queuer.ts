@@ -1,4 +1,4 @@
-import { Song, SongId } from "./interfaces";
+import { Song, SongId } from "../interfaces";
 
 export class MusicQueuer {
 	private autoplayPointerId: SongId;

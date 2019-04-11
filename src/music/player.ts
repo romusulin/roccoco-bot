@@ -3,8 +3,8 @@ import * as ytdl from "ytdl-core";
 
 // Imports
 import { VoiceConnection, StreamDispatcher } from "discord.js";
-import { Settings } from "./settings";
-import { SongId } from "./interfaces";
+import { Settings } from "../settings";
+import { SongId } from "../interfaces";
 
 export class MusicPlayer {
 	private voiceConnection: VoiceConnection;

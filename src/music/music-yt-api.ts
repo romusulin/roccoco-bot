@@ -1,11 +1,11 @@
 declare const require;
 declare const console;
 
-var auth = require("../auth.json");
+var auth = require("../../auth.json");
 
 // Imports
 import * as bhttp from "bhttp";
-import { Constants, Song, SongId } from "./interfaces";
+import { Constants, Song, SongId } from "../interfaces";
 
 export class YoutubeApiCaller {
 	// TODO interface http response
