@@ -4,12 +4,7 @@ declare const global;
 
 var auth = require("../auth.json");
 
-// Libs
-import * as _ from "lodash";
 import * as Discord from "discord.js";
-
-
-// Imports
 import { Utils } from "./utils";
 import { MusicRouter } from "./music-router";
 import { Message, Client, Snowflake } from "discord.js";

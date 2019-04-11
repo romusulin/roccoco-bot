@@ -1,9 +1,6 @@
 declare const client;
 declare const console;
 
-// Libs
-import * as _ from "lodash";
-
 //Imports
 import { MusicController } from "./music-ctrl";
 import { ArgumentPassObject, Song, Commands } from "./interfaces";

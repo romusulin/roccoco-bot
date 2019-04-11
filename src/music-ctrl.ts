@@ -1,9 +1,5 @@
 declare const console;
 
-// Libs
-import * as _ from "lodash";
-
-// Imports
 import { Settings } from "./settings";
 import { MusicPlayer } from "./music-player";
 import { MusicQueuer } from "./music-queuer";
