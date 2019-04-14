@@ -1,7 +1,7 @@
 declare const console;
 declare const require;
 declare const global;
-
+declare const process;
 var auth = require("../auth.json");
 
 import * as Discord from "discord.js";
@@ -37,3 +37,6 @@ client.on("message", (msg: Message) => {
 	RouterByGuildId.get(argObj.guildId).execute(argObj);
 });
 
+process.on('uncaughtException', function(err) {
+	console.log('Caught exception: ' + JSON.stringify(err));
+});

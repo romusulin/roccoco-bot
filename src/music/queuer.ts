@@ -1,24 +1,23 @@
 import { Song, SongId } from "../interfaces";
+import { Settings } from "../settings";
+import { YoutubeApiCaller } from "./music-yt-api";
 
 export class MusicQueuer {
 	private autoplayPointerId: SongId;
-	private nowPlaying: Song;
 
-	private ytAudioQueue : Song[];
+
+
 	private ytAudioHistory: Song[];
 
+	nowPlaying: Song;
+	audioQueue : Song[];
+
 	constructor() {
-		this.ytAudioQueue = [];
+		this.audioQueue = [];
 		this.ytAudioHistory = [];
 	}
 
-	get currentSong(): Song {
-		return this.nowPlaying;
-	}
 
-	get audioQueue(): Song[] {
-		return this.ytAudioQueue;
-	}
 
 	get audioHistory(): Song[] {
 		return this.ytAudioHistory;
@@ -35,8 +34,8 @@ export class MusicQueuer {
 	}
 
 	clearQueue(): number {
-		const queueLength: number = this.ytAudioQueue.length;
-		this.ytAudioQueue = [];
+		const queueLength: number = this.audioQueue.length;
+		this.audioQueue = [];
 
 		return queueLength;
 	}
@@ -45,12 +44,26 @@ export class MusicQueuer {
 		this.autoplayPointerId = this.nowPlaying.id;
 	}
 
-	push(song: Song, isAutoplayed: boolean): Song {
+	async pushByKeywords(searchKeywords: string[], isAutoplayed: boolean) {
+		const song = await YoutubeApiCaller.getVideoWrapperByKeywords(searchKeywords);
+		return this.push(song, isAutoplayed);
+	}
+
+
+	remove(index: number = 0): Song {
+		if (index >= 0 && index < this.audioQueue.length) {
+			return this.audioQueue.splice(index, 1)[0];
+		} else {
+			throw new Error("Index out of bounds.");
+		}
+	}
+
+	private push(song: Song, isAutoplayed: boolean): Song {
 		if (!song) {
 			return;
 		}
 
-		this.ytAudioQueue.push(song);
+		this.audioQueue.push(song);
 		if (isAutoplayed) {
 			this.autoplayPointerId = song.id;
 		}
@@ -58,20 +71,44 @@ export class MusicQueuer {
 		return song;
 	}
 
-	remove(index: number = 0): Song {
-		if (index => 0 && index <  this.ytAudioQueue.length) {
-			return this.ytAudioQueue.splice(index, 1)[0];
-		} else {
-			throw new Error("Index out of bounds.");
-		}
-	}
-
-	getNextSong(): Song {
-		this.nowPlaying = this.ytAudioQueue.shift();
+	async getNextSong(isAutoplayActive: boolean): Promise<Song> {
+		this.nowPlaying = this.audioQueue.shift();
 		if (this.nowPlaying) {
 		   this.ytAudioHistory.push(this.nowPlaying);
+		} else if (isAutoplayActive) {
+			this.nowPlaying = await this.findRelatedToPointer();
+			if (this.nowPlaying) {
+				this.ytAudioHistory.push(this.nowPlaying);
+			}
 		}
 
 		return this.nowPlaying;
+	}
+
+	private async findRelatedToPointer(): Promise<Song> {
+		const songIds: SongId[] = await YoutubeApiCaller.getRelatedVideoIds(this.autoplayPointer.id);
+
+		const id: SongId = songIds.find((songId: SongId) => {
+			if (!songId) {
+				return false;
+			}
+
+			let checkedIncrement: number = 0;
+			let isValidSong: boolean = true;
+
+			const playedHistory = this.audioHistory;
+			// If song was already played, try finding next one
+			for (let i = playedHistory.length - 1; i >= 0; i--) {
+				const playedSong = playedHistory[i];
+
+				if (checkedIncrement++ >= Settings.HistoryDepthCheck) break;
+				if (playedSong === undefined) continue;
+				if (songId === playedSong.id) isValidSong =  false;
+			}
+
+			return isValidSong;
+		});
+
+		return await YoutubeApiCaller.getVideoWrapperById(id);
 	}
 }

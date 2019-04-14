@@ -76,7 +76,7 @@ export class MusicRouter {
 	}
 
 	turnAutoplayOff(): void {
-		this.Controller.setIsAutoplayOn(false);
+		this.Controller.isAutoplayOn = false;
 		this.Messager.sendMessage("Autoplay is turned off");
 	}
 
@@ -95,18 +95,14 @@ export class MusicRouter {
 
 		let enqueuedSong: Song;
 		try {
-			enqueuedSong = await this.Controller.pushToQueue(argObj.args, isAutoplay);
+			enqueuedSong = await this.Controller.play(argObj.args, isAutoplay);
 		} catch (err) {
 			this.Messager.sendMessage(`Exception occured during enqueueing: ${err.message}`);
 		}
 
-		if (this.Controller.isNowPlaying) {
+		if (this.Controller.isPlaying) {
 			this.Messager.sendEnqueuedSong(enqueuedSong);
-		} else {
-			this.Controller.play();
 		}
-
-		return;
 	}
 
 	removeFromQueue(args): void {

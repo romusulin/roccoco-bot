@@ -7,11 +7,13 @@ var auth = require("../../auth.json");
 import * as bhttp from "bhttp";
 import { Constants, Song, SongId } from "../interfaces";
 
-export class YoutubeApiCaller {
+export namespace YoutubeApiCaller {
+	const YT_ENDPOINT = "https://www.googleapis.com/youtube/v3/";
+
 	// TODO interface http response
-	private static async getVideoIdByKeywords(searchKeywords: string[], index: number = 0): Promise<SongId> {
+	export async function getVideoIdByKeywords(searchKeywords: string[], index: number = 0): Promise<SongId> {
 		const searchQuery: string = searchKeywords.join(" ");
-		let requestUrl = `https://www.googleapis.com/youtube/v3/search?part=id&q=${searchQuery}&key=${auth.youtube_api_key}`;
+		let requestUrl = `${YT_ENDPOINT}search?part=id&q=${searchQuery}&key=${auth.youtube_api_key}`;
 
 		console.log("Searching for:"  + searchKeywords.join(' '));
 
@@ -23,8 +25,8 @@ export class YoutubeApiCaller {
 		return response.body.items[index].id.videoId;
 	}
 
-	static async getRelatedVideoIds(videoId: SongId): Promise<SongId[]> {
-		const requestUrl = `https://www.googleapis.com/youtube/v3/search?part=id&relatedToVideoId=${videoId}&type=video&key=${auth.youtube_api_key}`;
+	export async function getRelatedVideoIds(videoId: SongId): Promise<SongId[]> {
+		const requestUrl = `${YT_ENDPOINT}search?part=id&relatedToVideoId=${videoId}&type=video&key=${auth.youtube_api_key}`;
 
 		const response = await bhttp.get(requestUrl);
 
@@ -34,18 +36,15 @@ export class YoutubeApiCaller {
 		}, []);
 	}
 
-	static async getVideoWrapperByKeywords(searchKeywords: string[]): Promise<Song> {
+	export async function getVideoWrapperByKeywords(searchKeywords: string[]): Promise<Song> {
 		const videoId: SongId = await this.getVideoIdByKeywords(searchKeywords);
 		const song: Song = await this.getVideoWrapperById(videoId);
 
 		return song;
 	}
 
-	static async getVideoWrapperById(songId: SongId): Promise<Song> {
-		let requestUrl = 'https://www.googleapis.com/youtube/v3/videos?'
-			+ `id=${songId}`
-			+ `&key=${auth.youtube_api_key}`
-			+ `&part=id,snippet,contentDetails`;
+	export async function getVideoWrapperById(songId: SongId): Promise<Song> {
+		let requestUrl = `${YT_ENDPOINT}videos?id=${songId}&key=${auth.youtube_api_key}&part=id,snippet,contentDetails`;
 
 		const response = await bhttp.get(requestUrl);
 		const body = response.body;

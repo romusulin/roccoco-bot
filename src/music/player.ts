@@ -11,6 +11,12 @@ export class MusicPlayer {
 	streamDispatcher: StreamDispatcher;
 	progressInfo: any;
 
+	constructor(voiceConnection: VoiceConnection, songId: string) {
+		this.voiceConnection = voiceConnection;
+		const stream = ytdl(songId, { filter: 'audioonly', quality: "highestaudio" });
+		this.streamDispatcher = this.voiceConnection.playStream(stream, Settings.StreamDispatcherOptions);
+	}
+
 	setVoiceConnection(vc: VoiceConnection) {
 		this.voiceConnection = vc;
 	}
@@ -20,11 +26,7 @@ export class MusicPlayer {
 		return this.progressInfo;
 	}
 
-	getStream(songId: SongId): StreamDispatcher {
-		const stream = ytdl(songId, { filter: 'audioonly', quality: "highestaudio" });
-
-		this.streamDispatcher = this.voiceConnection.playStream(stream, Settings.StreamDispatcherOptions);
-
+	getStream(): StreamDispatcher {
 		return this.streamDispatcher;
 	}
 }
