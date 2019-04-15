@@ -40,7 +40,7 @@ export class MusicController extends AsyncEmitter {
 		return this.voiceConn;
 	}
 
-	async setVoiceConnection(destinationVoiceChannel: VoiceChannel): Promise<MusicController> {
+	async setVoiceChannel(destinationVoiceChannel: VoiceChannel): Promise<MusicController> {
 		// Check if bot is already in this channel, do nothing and return
 		const isTheSameChannel = this.voiceConnection.channel.id === destinationVoiceChannel.id;
 		if (this.voiceConnection && isTheSameChannel) {

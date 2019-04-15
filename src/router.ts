@@ -57,7 +57,7 @@ export class MusicRouter {
 	 async init(argObj: ArgumentPassObject): Promise<void> {
 		this.Messager.textChannel = argObj.channel as TextChannel;
 		const foundVoiceChannel: VoiceChannel = Utils.getVoiceChannelByUserId(argObj.authorId);
-		await this.Controller.setVoiceConnection(foundVoiceChannel);
+		await this.Controller.setVoiceChannel(foundVoiceChannel);
 	}
 
 	nowPlaying(): void {
