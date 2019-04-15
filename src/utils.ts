@@ -1,4 +1,4 @@
-import { VoiceChannel, TextChannel, Message } from "discord.js";
+import { VoiceChannel, TextChannel, Message, User } from "discord.js";
 import { Constants, ArgumentPassObject } from "./interfaces";
 import { Settings } from "./settings";
 
@@ -6,9 +6,10 @@ declare const client;
 
 export class Utils {
 	static getVoiceChannelByUserId(userId: string): VoiceChannel {
-		return client.channels.find(x => {
-			return x['members'] && x['members'].keyArray().includes(String(userId))
-				&& x.type === Constants.CHANNEL_TYPE_VOICE;
+		return client.channels.find(channel => {
+			const isVoiceChannel = channel.type === Constants.CHANNEL_TYPE_VOICE;
+			const isUserInside = channel['members'] && channel['members'].keyArray().includes(String(userId));
+			return isVoiceChannel && isUserInside;
 		});
 	}
 

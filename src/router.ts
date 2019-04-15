@@ -7,6 +7,7 @@ import { ArgumentPassObject, Song, Commands } from "./interfaces";
 import { Utils } from "./utils";
 import { ChatLogger } from "./chat/logger";
 import { TaskExecutorBuilder } from "./task-executor";
+import { TextChannel, VoiceChannel } from "discord.js";
 
 export class MusicRouter {
 	Controller: MusicController;
@@ -15,8 +16,6 @@ export class MusicRouter {
 
 	constructor() {
 		this.Messager = new ChatLogger();
-		this.Controller = new MusicController();
-
 		this.TaskExecutor = new TaskExecutorBuilder(this)
 		.register(Commands.JOIN, this.init)
 		.register(Commands.LEAVE, this.leave)
@@ -31,6 +30,20 @@ export class MusicRouter {
 		.register(Commands.AUTOPLAY_THIS, this.autoplayCurrentSong)
 		.register(Commands.AUTOPLAY_OFF, this.turnAutoplayOff)
 		.register(Commands.SHOW_PLAYED_HISTORY, this.showPlayedHistory);
+
+		this.Controller = new MusicController()
+		.on(MusicController.STARTED_SPEAKING, () => {
+			this.Messager.sendNowStartedPlaying(this.Controller.currentSong);
+			client.user.setActivity(this.Controller.currentSong.snippet.title);
+		})
+		.on(MusicController.STOPPED_SPEAKING, () => {
+			client.user.setActivity(this.Controller.isAutoplayOn ? "Finding another song..." : "");
+		})
+		.on(MusicController.DISPATCHER_END, (reason) => {
+			if (reason !== Commands.LEAVE) {
+				this.play();
+			}
+		});
 	}
 
 	async execute(argObj: ArgumentPassObject): Promise<void> {
@@ -42,18 +55,9 @@ export class MusicRouter {
 	}
 
 	 async init(argObj: ArgumentPassObject): Promise<void> {
-		this.Messager.textChannel = argObj.channel;
-
-		await this.Controller.setVoiceConnection(await Utils.getVoiceChannelByUserId(argObj.authorId));
-
-		this.Controller.streamDispatcherListener = (isSpeaking) => {
-			if (isSpeaking) {
-				this.Messager.sendNowStartedPlaying(this.Controller.currentSong);
-				client.user.setActivity(this.Controller.currentSong.snippet.title);
-			}
-		};
-
-		return;
+		this.Messager.textChannel = argObj.channel as TextChannel;
+		const foundVoiceChannel: VoiceChannel = Utils.getVoiceChannelByUserId(argObj.authorId);
+		await this.Controller.setVoiceConnection(foundVoiceChannel);
 	}
 
 	nowPlaying(): void {
@@ -90,14 +94,19 @@ export class MusicRouter {
 		}
 	}
 
-	async play(argObj: ArgumentPassObject): Promise<void> {
-		const isAutoplay = argObj.command === Commands.AUTOPLAY ? true : false;
-
+	// TODO: promisify with a .once(resolve)
+	async play(argObj?: ArgumentPassObject): Promise<void> {
 		let enqueuedSong: Song;
 		try {
-			enqueuedSong = await this.Controller.play(argObj.args, isAutoplay);
+			if (argObj) {
+				const isAutoplay: boolean = argObj.command === Commands.AUTOPLAY;
+				const searchKeywords: string[] = argObj.args;
+				enqueuedSong = await this.Controller.play(searchKeywords, isAutoplay);
+			} else {
+				enqueuedSong = await this.Controller.play();
+			}
 		} catch (err) {
-			this.Messager.sendMessage(`Exception occured during enqueueing: ${err.message}`);
+			this.Messager.sendMessage(`Exception occured during play: ${err.message}:\n${err.stack}`);
 		}
 
 		if (this.Controller.isPlaying) {

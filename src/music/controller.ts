@@ -4,17 +4,22 @@ import { MusicPlayer } from "./player";
 import { MusicQueuer } from "./queuer";
 import { Song, Constants, Commands } from "../interfaces";
 import { VoiceConnection, VoiceChannel, StreamDispatcher } from "discord.js";
+import { AsyncEmitter } from "../async-emitter";
 
-export class MusicController {
+export class MusicController extends AsyncEmitter {
+	static STARTED_SPEAKING = "STARTED_SPEAKING";
+	static STOPPED_SPEAKING = "STOPPED_SPEAKING";
+	static DISPATCHER_END = "DISPATCHER_END";
+
 	private MusicQueuer: MusicQueuer
 	private voiceConn: VoiceConnection;
 	private activeStreamDispatcher: StreamDispatcher;
 
 	isAutoplayOn: boolean;
 	isPlaying: boolean;
-	streamDispatcherListener: Function;
-	
+
 	constructor() {
+		super();
 		this.MusicQueuer = new MusicQueuer();
 		this.isAutoplayOn = false;
 	}
@@ -35,16 +40,25 @@ export class MusicController {
 		return this.voiceConn;
 	}
 
-	async setVoiceConnection(voiceChannel: VoiceChannel): Promise<MusicController> {
+	async setVoiceConnection(destinationVoiceChannel: VoiceChannel): Promise<MusicController> {
 		// Check if bot is already in this channel, do nothing and return
-		if (this.voiceConnection &&  this.voiceConnection.channel.name === voiceChannel.name) {
-			return;
+		const isTheSameChannel = this.voiceConnection.channel.id === destinationVoiceChannel.id;
+		if (this.voiceConnection && isTheSameChannel) {
+			throw new Error("Already in that channel");
+		}
+
+		if (destinationVoiceChannel.full) {
+			throw new Error(`Channel is full.`);
+		}
+
+		if (!destinationVoiceChannel.joinable) {
+			throw new Error(`Channel is not joinable. \n ${destinationVoiceChannel.id}`);
 		}
 
 		try {
-			this.voiceConn = await voiceChannel.join();
+			this.voiceConn = await destinationVoiceChannel.join();
 		} catch (error) {
-			throw new Error("Failed joining channel.");
+			throw new Error(`Failed joining channel.\n ${error.message}`);
 		}
 
 		return this;
@@ -70,17 +84,14 @@ export class MusicController {
 		this.voiceConn = <VoiceConnection> undefined;
 	}
 
-	async handleSearch(searchKeywords: string[], isAutoplayed: boolean): Promise<Song> {
-		this.isAutoplayOn = !this.isAutoplayOn ? isAutoplayed : false;
-		return await this.MusicQueuer.pushByKeywords(searchKeywords, isAutoplayed);
-	}
-
 	async play(searchKeywords?: string[], isAutoplayed?: boolean): Promise<Song> {
 		let encounteredSong: Song;
 		if (searchKeywords) {
-			encounteredSong = await this.handleSearch(searchKeywords, isAutoplayed);
+			this.isAutoplayOn = isAutoplayed ? isAutoplayed : this.isAutoplayOn;
+			encounteredSong = await this.MusicQueuer.pushByKeywords(searchKeywords, isAutoplayed);
 		}
-		
+
+		// Queue, return the song for logging, leave the current song to finish
 		if (this.isPlaying) {
 			return encounteredSong;
 		}
@@ -90,37 +101,42 @@ export class MusicController {
 			return;
 		}
 
-		this.runStream(encounteredSong);
+		setImmediate(() => {
+			this.runStream(encounteredSong);
+		});
 		return encounteredSong;
 	}
 
 	async runStream(song: Song) {
 		this.activeStreamDispatcher = new MusicPlayer(this.voiceConnection, song.id)
 		.getStream()
-		.once(Constants.DISPATCHER_EVENT_SPEAKING, (isSpeaking) => {
+		.on(Constants.DISPATCHER_EVENT_SPEAKING, (isSpeaking) => {
 			this.isPlaying = !!isSpeaking;
 			if (isSpeaking) {
-				console.log(`--> Dispatcher started speaking: ${song.snippet.title}#${song.id}`);
-				this.streamDispatcherListener(isSpeaking);
+				console.log(`--> Dispatcher started speaking: ${song.snippet.title}#${song.id}`);;
+				this.emit(MusicController.STARTED_SPEAKING);
 			} else {
 				console.log("--> Dispatcher stopped speaking.");
+				this.emit(MusicController.STOPPED_SPEAKING);
 			}
 		})
 		.once(Constants.DISPATCHER_EVENT_END, (reason: string) => {
+			console.log("--> Dispatcher ended.");
 			this.isPlaying = false;
-			if (reason !== Commands.LEAVE) {
-				this.play();
-			}
+			// Called in router.ts, subscription queues play() to execution
+			this.emit(MusicController.DISPATCHER_END, reason);
 		});
 	}
 
 	async skip(): Promise<void> {
+		if (!this.isPlaying) {
+			return;
+		}
+
 		console.log(`Skipping song: ${this.currentSong.snippet.title}`);
 		return new Promise<void>((resolve) => {
-			this.activeStreamDispatcher.once(Constants.DISPATCHER_EVENT_SPEAKING, (isSpeaking) => {
-				if (!isSpeaking) {
-					resolve();
-				}
+			this.once(MusicController.STOPPED_SPEAKING, () => {
+				resolve();
 			});
 			this.activeStreamDispatcher.end(Commands.SKIP);
 		});
