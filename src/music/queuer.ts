@@ -17,8 +17,6 @@ export class MusicQueuer {
 		this.ytAudioHistory = [];
 	}
 
-
-
 	get audioHistory(): Song[] {
 		return this.ytAudioHistory;
 	}
@@ -49,6 +47,10 @@ export class MusicQueuer {
 		return this.push(song, isAutoplayed);
 	}
 
+	async pushToHistory(song: Song, isAutoplayed: boolean) {
+		this.audioHistory.push(song);
+		this.autoplayPointerId = isAutoplayed ? song.id : this.autoplayPointerId;
+	}
 
 	remove(index: number = 0): Song {
 		if (index >= 0 && index < this.audioQueue.length) {
@@ -72,16 +74,14 @@ export class MusicQueuer {
 	}
 
 	async getNextSong(isAutoplayActive: boolean): Promise<Song> {
-		this.nowPlaying = this.audioQueue.shift();
-		if (this.nowPlaying) {
-		   this.ytAudioHistory.push(this.nowPlaying);
-		} else if (isAutoplayActive) {
-			this.nowPlaying = await this.findRelatedToPointer();
-			if (this.nowPlaying) {
-				this.ytAudioHistory.push(this.nowPlaying);
-			}
+		let foundSong: Song = this.audioQueue.shift();
+		 if (isAutoplayActive && !foundSong){
+			foundSong = await this.findRelatedToPointer();
 		}
 
+		this.pushToHistory(foundSong, isAutoplayActive);
+
+		this.nowPlaying = foundSong;
 		return this.nowPlaying;
 	}
 

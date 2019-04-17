@@ -12,9 +12,9 @@ export class MusicController extends AsyncEmitter {
 	static DISPATCHER_END = "DISPATCHER_END";
 
 	private MusicQueuer: MusicQueuer
-	private voiceConn: VoiceConnection;
 	private activeStreamDispatcher: StreamDispatcher;
 
+	voiceConnection: VoiceConnection;
 	isAutoplayOn: boolean;
 	isPlaying: boolean;
 
@@ -36,15 +36,13 @@ export class MusicController extends AsyncEmitter {
 		return this.MusicQueuer.audioHistory;
 	}
 
-	get voiceConnection(): VoiceConnection {
-		return this.voiceConn;
-	}
-
 	async setVoiceChannel(destinationVoiceChannel: VoiceChannel): Promise<MusicController> {
 		// Check if bot is already in this channel, do nothing and return
-		const isTheSameChannel = this.voiceConnection.channel.id === destinationVoiceChannel.id;
-		if (this.voiceConnection && isTheSameChannel) {
-			throw new Error("Already in that channel");
+		if (this.voiceConnection) {
+			const isTheSameChannel = this.voiceConnection.channel.id === destinationVoiceChannel.id;
+			if (this.voiceConnection && isTheSameChannel) {
+				throw new Error("Already in that channel");
+			}
 		}
 
 		if (destinationVoiceChannel.full) {
@@ -56,7 +54,7 @@ export class MusicController extends AsyncEmitter {
 		}
 
 		try {
-			this.voiceConn = await destinationVoiceChannel.join();
+			this.voiceConnection = await destinationVoiceChannel.join();
 		} catch (error) {
 			throw new Error(`Failed joining channel.\n ${error.message}`);
 		}
@@ -80,8 +78,8 @@ export class MusicController extends AsyncEmitter {
 	}
 
 	leaveVoiceChannel(): void {
-		this.voiceConn.channel.leave();
-		this.voiceConn = <VoiceConnection> undefined;
+		this.voiceConnection.channel.leave();
+		this.voiceConnection = <VoiceConnection> undefined;
 	}
 
 	async play(searchKeywords?: string[], isAutoplayed?: boolean): Promise<Song> {
