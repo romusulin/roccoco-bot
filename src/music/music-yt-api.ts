@@ -30,16 +30,20 @@ export namespace YoutubeApiCaller {
 
 		const response = await bhttp.get(requestUrl);
 
-		return response.body.items.reduce(function(array, currentId) {
+		const songIds: SongId[] = response.body.items.reduce(function(array, currentId) {
 			array.push(currentId.id.videoId);
 			return array;
 		}, []);
+
+		console.log(`YoutubeAPI:getRelatedVideoIds: searching with "${videoId}"; found ${songIds.length} songs: [${songIds.toString()}]`);
+		return songIds;
 	}
 
 	export async function getVideoWrapperByKeywords(searchKeywords: string[]): Promise<Song> {
 		const videoId: SongId = await this.getVideoIdByKeywords(searchKeywords);
 		const song: Song = await this.getVideoWrapperById(videoId);
 
+		console.log(`YoutubeAPI:getVideoWrapperByKeywords: searching "${searchKeywords.toString()}"; found "${song.snippet.title}"#${song.id}`);
 		return song;
 	}
 
@@ -58,6 +62,7 @@ export namespace YoutubeApiCaller {
 			throw Error("Found result is not a video.");
 		}
 
+		console.log(`YoutubeAPI:getVideoWrapperById: searching "${songId}"; found "${item.id}"#${item.snippet.title}`)
 		return <Song> {
 			id: item.id,
 			snippet: item.snippet,
