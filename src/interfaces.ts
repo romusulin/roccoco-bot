@@ -1,4 +1,5 @@
 import { TextChannel, Message, Snowflake } from "discord.js";
+import { Snippet } from "./music/music-yt-api";
 
 export type SongId = string;
 
@@ -10,32 +11,10 @@ export interface Song {
 	progressInfo: ProgressInfo;
 }
 
-export interface ProgressInfo {
-
-}
-export interface UnparsedSong {
-	id: {
-		videoId: SongId;
-		kind: string;
-	};
-	kind: string;
-	snippet: Snippet;
-	contentDetails: ContentDetails;
-}
-export interface Snippet {
-	title: string;
-	description: string;
-	thumbnails: any;
-	channelTitle: string;
-}
+export interface ProgressInfo { };
 
 export interface ContentDetails {
 	duration: string;
-}
-
-export interface Request {
-	userId: string;
-	textChannel: TextChannel;
 }
 
 export interface ArgumentPassObject {

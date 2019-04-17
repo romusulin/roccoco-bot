@@ -4,9 +4,6 @@ import { YoutubeApiCaller } from "./music-yt-api";
 
 export class MusicQueuer {
 	private autoplayPointerId: SongId;
-
-
-
 	private ytAudioHistory: Song[];
 
 	nowPlaying: Song;

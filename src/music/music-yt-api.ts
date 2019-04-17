@@ -71,3 +71,9 @@ export namespace YoutubeApiCaller {
 	}
 }
 
+export interface Snippet {
+	title: string;
+	description: string;
+	thumbnails: any;
+	channelTitle: string;
+}
