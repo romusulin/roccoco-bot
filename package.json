@@ -17,8 +17,9 @@
     "npm": "^6.9.0"
   },
   "scripts": {
-    "start": "npm run compile && node dist/bot.js",
-    "postinstall": "tsc -p tsconfig.json"
+    "compile": "tsc -p tsconfig.json",
+    "start": "node dist/bot.js",
+    "postinstall": "npm run compile"
   },
   "engines": {
     "node:": "10.15.3"
