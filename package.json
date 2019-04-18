@@ -17,7 +17,7 @@
   },
   "scripts": {
     "compile": "tsc -p tsconfig.json",
-    "run": "node dist/bot.js"
+    "start": "npm run compile && node dist/bot.js"
   },
   "engines": {
     "node:": "10.15.3"
