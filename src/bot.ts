@@ -2,7 +2,6 @@ declare const console;
 declare const require;
 declare const global;
 declare const process;
-var auth = require("../auth.json");
 
 import * as Discord from "discord.js";
 import { Utils } from "./utils";
@@ -16,7 +15,7 @@ const client = new Discord.Client();
 global.client = <Client> client;
 global.Discord = Discord;
 
-client.login(auth.token);
+client.login(Utils.getAuthValue("DISCORD_TOKEN"));
 
 client.on("ready", () => {
 	console.log(`Logged in as ${client.user.tag}!`);

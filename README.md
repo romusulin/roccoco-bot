@@ -5,8 +5,8 @@ ATP Discord bot with autoplay
 1. Create auth.json file with:
 ```javascript
 	{
-	"token": DiscordApiKey,
-	"youtube_api_key": YoutubeApiKey
+	"DISCORD_TOKEN": DiscordApiKey,
+	"YOUTUBE_API_KEY": YoutubeApiKey
 	{
 ```
 3. Use ```npm install``` to install dependencies

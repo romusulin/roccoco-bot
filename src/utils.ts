@@ -4,8 +4,8 @@ import { Settings } from "./settings";
 
 declare const client;
 
-export class Utils {
-	static getVoiceChannelByUserId(userId: string): VoiceChannel {
+export namespace Utils {
+	export function getVoiceChannelByUserId(userId: string): VoiceChannel {
 		return client.channels.find(channel => {
 			const isVoiceChannel = channel.type === Constants.CHANNEL_TYPE_VOICE;
 			const isUserInside = channel['members'] && channel['members'].keyArray().includes(String(userId));
@@ -13,7 +13,7 @@ export class Utils {
 		});
 	}
 
-	static parseMessage(msg: Message): ArgumentPassObject {
+	export function parseMessage(msg: Message): ArgumentPassObject {
 		let sourceMsg = msg.content;
 		var retObj: ArgumentPassObject = {
 			success: false
@@ -32,5 +32,18 @@ export class Utils {
 		}
 
 		return retObj;
+	}
+
+	export function getAuthValue(key: string): string {
+		let tokenValue: string = process.env[key];
+		if (!tokenValue) {
+			const token = require("../auth.json")[key];
+			if (!token) {
+				throw new Error(`Missing "${key}" token.`);
+			}
+			tokenValue = token;
+		}
+
+		return tokenValue;
 	}
 }

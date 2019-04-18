@@ -1,11 +1,12 @@
 declare const require;
 declare const console;
 
-var auth = require("../../auth.json");
-
 // Imports
 import * as bhttp from "bhttp";
 import { Constants, Song, SongId } from "../interfaces";
+import { Utils } from "../utils";
+
+const YT_TOKEN = Utils.getAuthValue("YOUTUBE_API_KEY");
 
 export namespace YoutubeApiCaller {
 	const YT_ENDPOINT = "https://www.googleapis.com/youtube/v3/";
@@ -13,7 +14,7 @@ export namespace YoutubeApiCaller {
 	// TODO interface http response
 	export async function getVideoIdByKeywords(searchKeywords: string[], index: number = 0): Promise<SongId> {
 		const searchQuery: string = searchKeywords.join(" ");
-		let requestUrl = `${YT_ENDPOINT}search?part=id&q=${searchQuery}&key=${auth.youtube_api_key}`;
+		let requestUrl = `${YT_ENDPOINT}search?part=id&q=${searchQuery}&key=${YT_TOKEN}`;
 
 		console.log("Searching for:"  + searchKeywords.join(' '));
 
@@ -26,7 +27,7 @@ export namespace YoutubeApiCaller {
 	}
 
 	export async function getRelatedVideoIds(videoId: SongId): Promise<SongId[]> {
-		const requestUrl = `${YT_ENDPOINT}search?part=id&relatedToVideoId=${videoId}&type=video&key=${auth.youtube_api_key}`;
+		const requestUrl = `${YT_ENDPOINT}search?part=id&relatedToVideoId=${videoId}&type=video&key=${YT_TOKEN}`;
 
 		const response = await bhttp.get(requestUrl);
 
@@ -48,7 +49,7 @@ export namespace YoutubeApiCaller {
 	}
 
 	export async function getVideoWrapperById(songId: SongId): Promise<Song> {
-		let requestUrl = `${YT_ENDPOINT}videos?id=${songId}&key=${auth.youtube_api_key}&part=id,snippet,contentDetails`;
+		let requestUrl = `${YT_ENDPOINT}videos?id=${songId}&key=${YT_TOKEN}&part=id,snippet,contentDetails`;
 
 		const response = await bhttp.get(requestUrl);
 		const body = response.body;
