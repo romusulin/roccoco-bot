@@ -1,5 +1,3 @@
-declare const console;
-
 import { MusicPlayer } from "./player";
 import { MusicQueuer } from "./queuer";
 import { Song, Constants, Commands } from "../interfaces";

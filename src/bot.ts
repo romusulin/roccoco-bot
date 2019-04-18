@@ -1,7 +1,4 @@
-declare const console;
-declare const require;
 declare const global;
-declare const process;
 
 import * as Discord from "discord.js";
 import { Utils } from "./utils";

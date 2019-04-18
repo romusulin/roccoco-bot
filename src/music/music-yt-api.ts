@@ -1,7 +1,3 @@
-declare const require;
-declare const console;
-
-// Imports
 import * as bhttp from "bhttp";
 import { Constants, Song, SongId } from "../interfaces";
 import { Utils } from "../utils";

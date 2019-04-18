@@ -1,6 +1,3 @@
-
-declare const console;
-
 import { ArgumentPassObject, Commands } from "./interfaces";
 import { MusicRouter } from "./router";
 

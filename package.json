@@ -5,19 +5,20 @@
   "main": "bot.js",
   "author": "romusulin",
   "dependencies": {
+    "@types/node": "^11.13.5",
     "bhttp": "^1.2.4",
     "discord.js": "^11.4.2",
     "ffmpeg": "0.0.4",
     "node-opus": "^0.3.0",
+    "typescript": "^3.0.3",
     "ytdl-core": "^0.25.1"
   },
   "devDependencies": {
-    "npm": "^6.9.0",
-    "typescript": "^3.0.3"
+    "npm": "^6.9.0"
   },
   "scripts": {
-    "compile": "tsc -p tsconfig.json",
-    "start": "npm run compile && node dist/bot.js"
+    "start": "npm run compile && node dist/bot.js",
+    "postinstall": "tsc -p tsconfig.json"
   },
   "engines": {
     "node:": "10.15.3"

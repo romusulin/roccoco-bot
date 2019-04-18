@@ -1,7 +1,5 @@
 declare const client;
-declare const console;
 
-//Imports
 import { MusicController } from "./music/controller";
 import { ArgumentPassObject, Song, Commands } from "./interfaces";
 import { Utils } from "./utils";
