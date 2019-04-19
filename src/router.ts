@@ -87,7 +87,7 @@ export class MusicRouter {
 	}
 
 	leave(): void {
-		if (!this.Controller.voiceConnection) {
+		if (this.Controller.voiceConnection) {
 			this.Controller.leaveVoiceChannel();
 		}
 	}
