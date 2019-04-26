@@ -5,13 +5,13 @@
   "main": "bot.js",
   "author": "romusulin",
   "dependencies": {
-    "@types/node": "^11.13.5",
+    "@types/node": "^11.13.8",
     "bhttp": "^1.2.4",
     "discord.js": "^11.4.2",
     "ffmpeg": "0.0.4",
-    "node-opus": "^0.3.0",
-    "typescript": "^3.0.3",
-    "ytdl-core": "^0.25.1"
+    "node-opus": "^0.3.1",
+    "typescript": "^3.4.5",
+    "ytdl-core": "^0.25.2"
   },
   "devDependencies": {
     "npm": "^6.9.0"
