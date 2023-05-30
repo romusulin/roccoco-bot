@@ -11,7 +11,13 @@ export class Player extends AudioPlayer {
 	}
 
 	playSong(voiceConnection: VoiceConnection, songId: string) {
-		const stream = ytdl(songId, {filter: 'audioonly', quality: 'highest'});
+		const channelId = voiceConnection.joinConfig.channelId;
+		const channel = global.client.channels?.cache?.get(channelId);
+
+		const stream = ytdl(songId, {quality: 'highestaudio', filter: (format) => {
+				return channel?.bitrate ? format.bitrate <= channel.bitrate : false;
+			}
+		});
 		const resource = createAudioResource(stream);
 		voiceConnection.subscribe(this);
 		this.play(resource);
