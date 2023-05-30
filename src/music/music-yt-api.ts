@@ -1,71 +1,83 @@
 import * as bhttp from "bhttp";
-import { Constants, Song, SongId } from "../interfaces";
-import { Utils } from "../utils";
 
-const YT_TOKEN = Utils.getAuthValue("YOUTUBE_API_KEY");
+const YT_TOKEN = process.env.YT_TOKEN;
+const YOUTUBE_KIND_VIDEO = "youtube#video";
+const YT_ENDPOINT = "https://www.googleapis.com/youtube/v3/";
 
-export namespace YoutubeApiCaller {
-	const YT_ENDPOINT = "https://www.googleapis.com/youtube/v3/";
+export type SongId = string;
 
-	// TODO interface http response
-	export async function getVideoIdByKeywords(searchKeywords: string[], index: number = 0): Promise<SongId> {
-		const searchQuery: string = searchKeywords.join(" ");
-		let requestUrl = `${YT_ENDPOINT}search?part=id&q=${searchQuery}&key=${YT_TOKEN}`;
+export interface Song {
+	id: SongId;
+	kind: string;
+	snippet: Snippet;
+	contentDetails: ContentDetails;
+	progressInfo: ProgressInfo;
+}
 
-		console.log("Searching for:"  + searchKeywords.join(' '));
+export interface ProgressInfo {
+}
 
-		const response = await bhttp.get(requestUrl);
-		if (!response.body.items) {
-			throw Error("Query returned 0 results.");
-		}
+export interface ContentDetails {
+	duration: string;
+}
 
-		return response.body.items[index].id.videoId;
+async function getVideoIdByKeywords(searchKeywords: string[], index: number = 0): Promise<SongId> {
+	const searchQuery: string = searchKeywords.join(" ");
+	let requestUrl = `${YT_ENDPOINT}search?part=id&q=${searchQuery}&key=${YT_TOKEN}`;
+
+	console.log("Searching for:"  + searchKeywords.join(' '));
+
+	const response = await bhttp.get(requestUrl);
+	if (!response.body.items) {
+		throw Error("Query returned 0 results.");
 	}
 
-	export async function getRelatedVideoIds(videoId: SongId): Promise<SongId[]> {
-		const requestUrl = `${YT_ENDPOINT}search?part=id&relatedToVideoId=${videoId}&type=video&key=${YT_TOKEN}`;
+	return response.body.items[index].id.videoId;
+}
 
-		const response = await bhttp.get(requestUrl);
+export async function getRelatedVideoIds(videoId: SongId): Promise<SongId[]> {
+	const requestUrl = `${YT_ENDPOINT}search?part=id&relatedToVideoId=${videoId}&type=video&key=${YT_TOKEN}`;
 
-		const songIds: SongId[] = response.body.items.reduce(function(array, currentId) {
-			array.push(currentId.id.videoId);
-			return array;
-		}, []);
+	const response = await bhttp.get(requestUrl);
 
-		console.log(`YoutubeAPI:getRelatedVideoIds: searching with "${videoId}"; found ${songIds.length} songs: [${songIds.toString()}]`);
-		return songIds;
+	const songIds: SongId[] = response.body.items.reduce(function(array, currentId) {
+		array.push(currentId.id.videoId);
+		return array;
+	}, []);
+
+	console.log(`YoutubeAPI:getRelatedVideoIds: searching with "${videoId}"; found ${songIds.length} songs: [${songIds.toString()}]`);
+	return songIds;
+}
+
+export async function getVideoWrapperByKeywords(searchKeywords: string[]): Promise<Song> {
+	const videoId: SongId = await getVideoIdByKeywords(searchKeywords);
+	const song: Song = await getVideoWrapperById(videoId);
+
+	console.log(`YoutubeAPI:getVideoWrapperByKeywords: searching "${searchKeywords.toString()}"; found "${song.snippet.title}"#${song.id}`);
+	return song;
+}
+
+export async function getVideoWrapperById(songId: SongId): Promise<Song> {
+	let requestUrl = `${YT_ENDPOINT}videos?id=${songId}&key=${YT_TOKEN}&part=id,snippet,contentDetails`;
+
+	const response = await bhttp.get(requestUrl);
+	const body = response.body;
+
+	if (body.items.length === 0) {
+		throw Error(`Query returned 0 results for #${songId}`);
 	}
 
-	export async function getVideoWrapperByKeywords(searchKeywords: string[]): Promise<Song> {
-		const videoId: SongId = await this.getVideoIdByKeywords(searchKeywords);
-		const song: Song = await this.getVideoWrapperById(videoId);
-
-		console.log(`YoutubeAPI:getVideoWrapperByKeywords: searching "${searchKeywords.toString()}"; found "${song.snippet.title}"#${song.id}`);
-		return song;
+	const item = body.items[0];
+	if (item.id.kind === YOUTUBE_KIND_VIDEO) {
+		throw Error("Found result is not a video.");
 	}
 
-	export async function getVideoWrapperById(songId: SongId): Promise<Song> {
-		let requestUrl = `${YT_ENDPOINT}videos?id=${songId}&key=${YT_TOKEN}&part=id,snippet,contentDetails`;
-
-		const response = await bhttp.get(requestUrl);
-		const body = response.body;
-
-		if (body.items.length === 0) {
-			throw Error(`Query returned 0 results for #${songId}`);
-		}
-
-		const item = body.items[0];
-		if (item.id.kind === Constants.YOUTUBE_KIND_VIDEO) {
-			throw Error("Found result is not a video.");
-		}
-
-		console.log(`YoutubeAPI:getVideoWrapperById: searching "${songId}"; found "${item.id}"#${item.snippet.title}`)
-		return <Song> {
-			id: item.id,
-			snippet: item.snippet,
-			contentDetails: item.contentDetails
-		};
-	}
+	console.log(`YoutubeAPI:getVideoWrapperById: searching "${songId}"; found "${item.id}"#${item.snippet.title}`)
+	return <Song> {
+		id: item.id,
+		snippet: item.snippet,
+		contentDetails: item.contentDetails
+	};
 }
 
 export interface Snippet {

@@ -1,31 +1,21 @@
-// Libs
 import * as ytdl from "ytdl-core";
+import {
+	AudioPlayer,
+	createAudioResource,
+	VoiceConnection
+} from "@discordjs/voice";
 
-// Imports
-import { VoiceConnection, StreamDispatcher } from "discord.js";
-import { Settings } from "../settings";
-
-export class MusicPlayer {
-	private voiceConnection: VoiceConnection;
-	streamDispatcher: StreamDispatcher;
-	progressInfo: any;
-
-	constructor(voiceConnection: VoiceConnection, songId: string) {
-		this.voiceConnection = voiceConnection;
-		const stream = ytdl(songId, { filter: 'audioonly', quality: "highestaudio" });
-		this.streamDispatcher = this.voiceConnection.playStream(stream, Settings.StreamDispatcherOptions);
+export class Player extends AudioPlayer {
+	constructor() {
+		super();
 	}
 
-	setVoiceConnection(vc: VoiceConnection) {
-		this.voiceConnection = vc;
-	}
+	playSong(voiceConnection: VoiceConnection, songId: string) {
+		const stream = ytdl(songId, {filter: 'audioonly', quality: 'highest'});
+		const resource = createAudioResource(stream);
+		voiceConnection.subscribe(this);
+		this.play(resource);
 
-	getProgressInfo() {
-		// WIP
-		return this.progressInfo;
-	}
-
-	getStream(): StreamDispatcher {
-		return this.streamDispatcher;
+		return this;
 	}
 }

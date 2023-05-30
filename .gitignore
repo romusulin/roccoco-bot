@@ -32,6 +32,8 @@ dist
 samples
 bin
 auth.json
+*/**.js
+*/**.js.map
 
 # Optional npm cache directory
 .npm

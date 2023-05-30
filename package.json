@@ -5,23 +5,23 @@
   "main": "bot.js",
   "author": "romusulin",
   "dependencies": {
-    "@types/node": "^11.13.8",
-    "bhttp": "^1.2.4",
-    "discord.js": "^11.4.2",
+    "@discordjs/builders": "^1.5.0",
+    "@discordjs/opus": "^0.9.0",
+    "@discordjs/voice": "^0.15.0",
+    "@types/node": "^18.14.0",
+    "bhttp": "^1.2.8",
+    "discord-api-types": "^0.37.35",
+    "discord.js": "^14.8.0",
     "ffmpeg": "0.0.4",
-    "node-opus": "^0.3.1",
-    "typescript": "^3.4.5",
-    "ytdl-core": "^0.25.2"
-  },
-  "devDependencies": {
-    "npm": "^6.9.0"
+    "sodium": "^3.0.2",
+    "typescript": "^4.9.5",
+    "ytdl-core": "^4.11.2"
   },
   "scripts": {
     "compile": "tsc -p tsconfig.json",
-    "start": "node dist/bot.js",
-    "postinstall": "npm run compile"
+    "start": "node src/bot.js"
   },
   "engines": {
-    "node:": "10.15.3"
+    "node:": "18.14.0"
   }
 }

@@ -1,0 +1,15 @@
+export const Commands = {
+	PLAY: ["play", "p"],
+	JOIN: ["join"],
+	LEAVE: ["leave"],
+	SKIP: ["skip"],
+	QUEUE: ["queue", "q"],
+	AUTOPLAY_THIS: ["autoplaythis", "autoon"],
+	AUTOPLAY_OFF: ["autoplayoff", "autooff"],
+	USE_THIS_TEXT_CHANNEL: ["usethistextchannel", "use"],
+	NOW_PLAYING: ["nowplaying", "np"],
+	CLEAR_QUEUE: ["cl"],
+	AUTOPLAY: ["autoplay", "ap"],
+	REMOVE: ["remove", "rm"],
+	SHOW_PLAYED_HISTORY: ["history"],
+}

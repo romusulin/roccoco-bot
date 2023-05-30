@@ -1,9 +1,10 @@
-import { ArgumentPassObject, Commands } from "./interfaces";
+import { ParsedMessageRequest } from "./parsed-message-request";
 import { MusicRouter } from "./router";
+import {Commands} from "./commands";
 
 export class TaskExecutorBuilder {
 	private functionMap: TaskExecutorMap;
-	private commandArgumentQueue: ArgumentPassObject[];
+	private commandArgumentQueue: ParsedMessageRequest[];
 	private context: MusicRouter;
 	private isExecuting: boolean;
 
@@ -13,13 +14,15 @@ export class TaskExecutorBuilder {
 		this.context = context;
 	}
 
-	register(cmd: string, func: Function): TaskExecutorBuilder {
-		this.functionMap[cmd] = func.bind(this.context);
+	register(cmds: string[], func: Function): TaskExecutorBuilder {
+		for (let cmd of cmds) {
+			this.functionMap[cmd] = func.bind(this.context);
+		}
 
 		return this;
 	}
 
-	async execute(argObj: ArgumentPassObject): Promise<TaskExecutorBuilder> {
+	async execute(argObj: ParsedMessageRequest): Promise<TaskExecutorBuilder> {
 		const cmd: string = argObj.command;
 		if (!this.functionMap[cmd]) {
 			return;
@@ -42,7 +45,7 @@ export class TaskExecutorBuilder {
 	async run(): Promise<void> {
 		this.isExecuting = true;
 		while (this.commandArgumentQueue.length) {
-			const argObj: ArgumentPassObject = this.commandArgumentQueue.shift();
+			const argObj: ParsedMessageRequest = this.commandArgumentQueue.shift();
 			const registeredFunction = this.functionMap[argObj.command];
 
 			await registeredFunction(argObj);
@@ -54,5 +57,5 @@ export class TaskExecutorBuilder {
 }
 
 export type TaskExecutorMap = {
-	[value in Commands]?: Function
+	[command: string]: Function
 }

@@ -1,37 +1,42 @@
-import { TextChannel, RichEmbed } from "discord.js";
+import { TextChannel } from "discord.js";
 import { EmbedBuilder } from "./embed-builder";
-import { Song } from "../interfaces";
+import {Song} from "../music/music-yt-api";
 
 export class ChatLogger {
 	isEnabled: boolean;
 	textChannel: TextChannel;
 
-	sendChangedAutoplayPointer(song: Song): void {
-		const embed: RichEmbed = EmbedBuilder.getChangedAutoplayPointer(song);
-		this.textChannel.send({embed});
+	sendChangedAutoplayPointer(song: Song) {
+		const embed = EmbedBuilder.getChangedAutoplayPointer(song);
+
+		return this.textChannel.send({embeds: [embed]});
 	}
 
-	sendTextMessage(text: string): void {
-		this.textChannel.send(text);
+	sendTextMessage(text: string) {
+		return this.textChannel.send(text);
 	}
 
-	sendMessage(text: string): void {
+	sendMessage(text: string) {
 		const embed = EmbedBuilder.getMessageTemplate(text);
-		this.textChannel.send({embed});
+
+		return this.textChannel.send({embeds: [embed]});
 	}
 
-	sendEnqueuedSong(song: Song): void {
-		const embed: RichEmbed = EmbedBuilder.getEnqueuedSong(song);
-		this.textChannel.send({embed});
+	sendEnqueuedSong(song: Song) {
+		const embed = EmbedBuilder.getEnqueuedSong(song);
+
+		return this.textChannel.send({embeds: [embed]});
 	}
 
-	sendRemovedSong(song: Song): void {
-		const embed: RichEmbed = EmbedBuilder.getRemovedSong(song);
-		this.textChannel.send({embed});
+	sendRemovedSong(song: Song) {
+		const embed = EmbedBuilder.getRemovedSong(song);
+
+		return this.textChannel.send({embeds: [embed]});
 	}
 
-	sendNowStartedPlaying(song: Song): void {
-		const embed: RichEmbed = EmbedBuilder.getNowPlaying(song);
-		this.textChannel.send({embed});
+	sendNowStartedPlaying(song: Song) {
+		const embed = EmbedBuilder.getNowPlaying(song);
+
+		return this.textChannel.send({embeds: [embed]});
 	}
 }

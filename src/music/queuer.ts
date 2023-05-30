@@ -1,8 +1,7 @@
-import { Song, SongId } from "../interfaces";
-import { Settings } from "../settings";
-import { YoutubeApiCaller } from "./music-yt-api";
+import {getRelatedVideoIds, getVideoWrapperByKeywords, getVideoWrapperById, Song, SongId} from "./music-yt-api";
 
 export class MusicQueuer {
+	private static HISTORY_DEPTH_CHECK = 50;
 	private autoplayPointerId: SongId;
 	private ytAudioHistory: Song[];
 
@@ -40,11 +39,11 @@ export class MusicQueuer {
 	}
 
 	async pushByKeywords(searchKeywords: string[], isAutoplayed: boolean) {
-		const song = await YoutubeApiCaller.getVideoWrapperByKeywords(searchKeywords);
+		const song = await getVideoWrapperByKeywords(searchKeywords);
 		return this.push(song, isAutoplayed);
 	}
 
-	async pushToHistory(song: Song, isAutoplayed: boolean) {
+	pushToHistory(song: Song, isAutoplayed: boolean) {
 		this.audioHistory.push(song);
 		this.autoplayPointerId = isAutoplayed ? song.id : this.autoplayPointerId;
 	}
@@ -83,7 +82,7 @@ export class MusicQueuer {
 	}
 
 	private async findRelatedToPointer(): Promise<Song> {
-		const songIds: SongId[] = await YoutubeApiCaller.getRelatedVideoIds(this.autoplayPointer.id);
+		const songIds: SongId[] = await getRelatedVideoIds(this.autoplayPointer.id);
 
 		const id: SongId = songIds.find((songId: SongId) => {
 			if (!songId) {
@@ -98,7 +97,7 @@ export class MusicQueuer {
 			for (let i = playedHistory.length - 1; i >= 0; i--) {
 				const playedSong = playedHistory[i];
 
-				if (checkedIncrement++ >= Settings.HistoryDepthCheck) break;
+				if (checkedIncrement++ >= MusicQueuer.HISTORY_DEPTH_CHECK) break;
 				if (playedSong === undefined) continue;
 				if (songId === playedSong.id) isValidSong =  false;
 			}
@@ -106,6 +105,6 @@ export class MusicQueuer {
 			return isValidSong;
 		});
 
-		return await YoutubeApiCaller.getVideoWrapperById(id);
+		return getVideoWrapperById(id);
 	}
 }
