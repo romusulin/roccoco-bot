@@ -1,3 +1,4 @@
+import * as express from 'express';
 import { parseMessage } from "./parse-message";
 
 declare const global;
@@ -51,4 +52,15 @@ client.on("messageCreate", (msg: Message) => {
 
 process.on('uncaughtException', function(err) {
 	console.error('Caught exception: ' + err.message);
+});
+
+const app = express();
+app.get('/', (req, res) => {
+	console.log('req received');
+	res.json('ack');
+});
+
+const PORT = parseInt(process.env.PORT) || 8080;
+app.listen(PORT, () => {
+	console.log(`App running on port ${PORT}`);
 });
