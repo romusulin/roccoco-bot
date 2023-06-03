@@ -83,7 +83,7 @@ export class MusicRouter {
 
 	async cleanHistory() {
 		this.Controller.clearAudioHistory();
-		await this.messager.sendTextMessage(`Queue cleared.\nRemoved ${noOfRemovedSongs} song ${(noOfRemovedSongs !== 1 ? "s" : "")}.`);
+		await this.messager.sendTextMessage(`History cleared.`);
 	}
 
 	async autoplayCurrentSong() {
