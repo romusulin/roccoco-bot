@@ -9,6 +9,7 @@ export const Commands = {
 	USE_THIS_TEXT_CHANNEL: ["usethistextchannel", "use"],
 	NOW_PLAYING: ["nowplaying", "np"],
 	CLEAR_QUEUE: ["cl"],
+	CLEAR_HISTORY: ["ch", "clearhistory"],
 	AUTOPLAY: ["autoplay", "ap"],
 	REMOVE: ["remove", "rm"],
 	SHOW_PLAYED_HISTORY: ["history"],

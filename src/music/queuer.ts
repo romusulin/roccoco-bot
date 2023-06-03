@@ -27,6 +27,10 @@ export class MusicQueuer {
 		});
 	}
 
+	clearHistory(): void {
+		this.ytAudioHistory = this.ytAudioHistory.slice(0, this.ytAudioHistory.length);
+	}
+
 	clearQueue(): number {
 		const queueLength: number = this.audioQueue.length;
 		this.audioQueue = [];

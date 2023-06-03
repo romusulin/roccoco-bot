@@ -32,7 +32,8 @@ export class MusicRouter {
 		.register(Commands.REMOVE, this.removeFromQueue)
 		.register(Commands.AUTOPLAY_THIS, this.autoplayCurrentSong)
 		.register(Commands.AUTOPLAY_OFF, this.turnAutoplayOff)
-		.register(Commands.SHOW_PLAYED_HISTORY, this.showPlayedHistory);
+		.register(Commands.SHOW_PLAYED_HISTORY, this.showPlayedHistory)
+		.register(Commands.CLEAR_HISTORY, this.cleanHistory);
 
 		this.Controller = new MusicController(guildId)
 		.on(MusicController.STARTED_SPEAKING, async () => {
@@ -77,6 +78,11 @@ export class MusicRouter {
 
 	async clearQueue() {
 		const noOfRemovedSongs: number = this.Controller.clearQueue();
+		await this.messager.sendTextMessage(`Queue cleared.\nRemoved ${noOfRemovedSongs} song ${(noOfRemovedSongs !== 1 ? "s" : "")}.`);
+	}
+
+	async cleanHistory() {
+		this.Controller.clearAudioHistory();
 		await this.messager.sendTextMessage(`Queue cleared.\nRemoved ${noOfRemovedSongs} song ${(noOfRemovedSongs !== 1 ? "s" : "")}.`);
 	}
 

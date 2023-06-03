@@ -41,6 +41,10 @@ export class MusicController extends AsyncEmitter {
 		return this.queuer.audioHistory;
 	}
 
+	clearAudioHistory(): void {
+		return this.queuer.clearHistory();
+	}
+
 	private getVoiceConnection(): VoiceConnection {
 		return djsGetVoiceConnection(this.guildId);
 	}
