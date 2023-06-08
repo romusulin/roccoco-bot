@@ -29,6 +29,7 @@ jspm_packages
 
 #Distributable and dev related files
 dist
+client/dist
 samples
 bin
 auth.json

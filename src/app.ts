@@ -7,6 +7,7 @@ import {MusicRouter} from "./router";
 import {Client, Message, Snowflake} from "discord.js";
 import {GatewayIntentBits} from "discord-api-types/v10";
 import {ParsedMessageRequest} from "./parsed-message-request";
+import * as path from "path";
 
 // Inits
 const client = new Client({
@@ -55,9 +56,10 @@ process.on('uncaughtException', function(err) {
 });
 
 const app = express();
+app.use(express.static('client/dist'));
 app.get('/', (req, res) => {
-	console.log('req received');
-	res.json('ack');
+	const indexPath = path.join(__dirname, 'client/dist/index.html');
+	res.sendFile(indexPath);
 });
 
 const PORT = parseInt(process.env.PORT) || 8080;
