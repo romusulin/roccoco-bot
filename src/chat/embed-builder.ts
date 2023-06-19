@@ -1,5 +1,5 @@
 import { EmbedBuilder as DjsEmbedBuilder } from "@discordjs/builders";
-import {Song} from "../music/music-yt-api";
+import { Song } from "../interfaces/song";
 
 declare const Discord: any;
 

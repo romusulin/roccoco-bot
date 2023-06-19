@@ -1,14 +1,13 @@
-import { ParsedMessageRequest } from "./parsed-message-request";
-import { MusicRouter } from "./router";
-import {Commands} from "./commands";
+import { ParsedMessageRequest } from "../interfaces/parsed-message-request";
+import { MusicControllerWrapper } from "../discord-client/music-controller-wrapper";
 
 export class TaskExecutorBuilder {
 	private functionMap: TaskExecutorMap;
 	private commandArgumentQueue: ParsedMessageRequest[];
-	private context: MusicRouter;
+	private context: MusicControllerWrapper;
 	private isExecuting: boolean;
 
-	constructor(context: MusicRouter) {
+	constructor(context: MusicControllerWrapper) {
 		this.functionMap = {};
 		this.commandArgumentQueue = [];
 		this.context = context;

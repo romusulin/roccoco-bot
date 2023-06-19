@@ -1,6 +1,6 @@
 import { TextChannel } from "discord.js";
 import { EmbedBuilder } from "./embed-builder";
-import {Song} from "../music/music-yt-api";
+import { Song } from "../interfaces/song";
 
 export class ChatLogger {
 	isEnabled: boolean;

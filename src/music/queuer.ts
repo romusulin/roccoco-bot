@@ -1,6 +1,8 @@
-import {getRelatedVideoIds, getVideoWrapperByKeywords, getVideoWrapperById, Song, SongId} from "./music-yt-api";
+import { getRelatedVideoIds, getVideoWrapperById, getVideoWrapperByKeywords } from "./music-yt-api";
+import { Song, SongId } from "../interfaces/song";
+import { AsyncEmitter } from "../utilities/async-emitter";
 
-export class MusicQueuer {
+export class MusicQueuer extends AsyncEmitter {
 	private static HISTORY_DEPTH_CHECK = 50;
 	private autoplayPointerId: SongId;
 	private ytAudioHistory: Song[];
@@ -9,6 +11,7 @@ export class MusicQueuer {
 	audioQueue : Song[];
 
 	constructor() {
+		super();
 		this.audioQueue = [];
 		this.ytAudioHistory = [];
 	}
@@ -74,12 +77,14 @@ export class MusicQueuer {
 	}
 
 	async getNextSong(isAutoplayActive: boolean): Promise<Song> {
-		let foundSong: Song = this.audioQueue.shift();
-		 if (isAutoplayActive && !foundSong){
-			foundSong = await this.findRelatedToPointer();
+		if (this.nowPlaying) {
+			this.pushToHistory(this.nowPlaying, isAutoplayActive);
 		}
 
-		this.pushToHistory(foundSong, isAutoplayActive);
+		let foundSong: Song = this.audioQueue.shift();
+	 	if (isAutoplayActive && !foundSong){
+			foundSong = await this.findRelatedToPointer();
+		}
 
 		this.nowPlaying = foundSong;
 		return this.nowPlaying;

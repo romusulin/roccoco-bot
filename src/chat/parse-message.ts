@@ -1,5 +1,6 @@
-import {Message, TextChannel} from "discord.js";
-import {ParsedMessageRequest} from "./parsed-message-request";
+import { Message, TextChannel } from "discord.js";
+import { ParsedMessageRequest } from "../interfaces/parsed-message-request";
+
 export function parseMessage(msg: Message): ParsedMessageRequest {
 	const sourceMsg = msg.content;
 	const retObj: ParsedMessageRequest = {

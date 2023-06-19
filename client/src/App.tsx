@@ -1,8 +1,13 @@
+import {AudioHistoryList} from "./AudioHistoryList.tsx";
+import {NowPlaying} from "./NowPlaying.tsx";
+
 function App() {
   return (
     <>
       <div>
-        App
+            App
+          <AudioHistoryList />
+          <NowPlaying />
       </div>
     </>
   )

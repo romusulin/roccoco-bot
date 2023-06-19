@@ -1,20 +1,15 @@
-import * as ytdl from "ytdl-core";
-import {
-	AudioPlayer,
-	createAudioResource,
-	VoiceConnection
-} from "@discordjs/voice";
+import { stream as streamYt } from "play-dl";
+import { AudioPlayer, createAudioResource, VoiceConnection } from "@discordjs/voice";
 
 export class Player extends AudioPlayer {
 	constructor() {
 		super();
 	}
 
-	playSong(voiceConnection: VoiceConnection, songId: string) {
-		const channelId = voiceConnection.joinConfig.channelId;
-		const channel = global.client.channels?.cache?.get(channelId);
-
-		const stream = ytdl(songId, {quality: 'highest', filter: 'audioonly'});
+	async playSong(voiceConnection: VoiceConnection, songId: string) {
+		const { stream } = await streamYt(songId, {
+			discordPlayerCompatibility: true
+		});
 
 		const resource = createAudioResource(stream);
 		voiceConnection.subscribe(this);

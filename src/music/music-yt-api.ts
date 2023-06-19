@@ -1,25 +1,9 @@
 import * as bhttp from "bhttp";
+import { Song, SongId } from "../interfaces/song";
 
 const YT_TOKEN = process.env.YT_TOKEN;
 const YOUTUBE_KIND_VIDEO = "youtube#video";
 const YT_ENDPOINT = "https://www.googleapis.com/youtube/v3/";
-
-export type SongId = string;
-
-export interface Song {
-	id: SongId;
-	kind: string;
-	snippet: Snippet;
-	contentDetails: ContentDetails;
-	progressInfo: ProgressInfo;
-}
-
-export interface ProgressInfo {
-}
-
-export interface ContentDetails {
-	duration: string;
-}
 
 async function getVideoIdByKeywords(searchKeywords: string[], index: number = 0): Promise<SongId> {
 	const searchQuery: string = searchKeywords.join(" ");
@@ -78,11 +62,4 @@ export async function getVideoWrapperById(songId: SongId): Promise<Song> {
 		snippet: item.snippet,
 		contentDetails: item.contentDetails
 	};
-}
-
-export interface Snippet {
-	title: string;
-	description: string;
-	thumbnails: any;
-	channelTitle: string;
 }

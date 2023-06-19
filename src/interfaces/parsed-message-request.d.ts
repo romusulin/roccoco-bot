@@ -1,4 +1,4 @@
-import {Message, Snowflake, TextChannel} from "discord.js";
+import { Message, Snowflake, TextChannel } from "discord.js";
 
 export interface ParsedMessageRequest {
 	success: boolean;

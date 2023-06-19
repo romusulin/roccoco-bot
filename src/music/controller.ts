@@ -1,20 +1,28 @@
-import {Player} from "./player";
-import {MusicQueuer} from "./queuer";
-import {InternalDiscordGatewayAdapterCreator, Snowflake} from "discord.js";
-import {AudioPlayerStatus, joinVoiceChannel, VoiceConnection, getVoiceConnection as djsGetVoiceConnection} from "@discordjs/voice";
-import {AsyncEmitter} from "../async-emitter";
-import {Song} from "./music-yt-api";
+import { Player } from "./player";
+import { MusicQueuer } from "./queuer";
+import { InternalDiscordGatewayAdapterCreator } from "discord.js";
+import {
+	AudioPlayerStatus,
+	getVoiceConnection as djsGetVoiceConnection,
+	joinVoiceChannel,
+	VoiceConnection
+} from "@discordjs/voice";
+import { AsyncEmitter } from "../utilities/async-emitter";
+import { Song } from "../interfaces/song";
 
 export class MusicController extends AsyncEmitter {
-	static STARTED_SPEAKING = "STARTED_SPEAKING";
-	static STOPPED_SPEAKING = "STOPPED_SPEAKING";
-
-	private queuer: MusicQueuer
+	private queuer: MusicQueuer;
 	private player: Player;
 	private _isPlaying: boolean;
 	private guildId: string;
 
 	isAutoplayOn: boolean;
+	static EVENT = {
+		STARTED_SPEAKING: 'STARTED_SPEAKING',
+		STOPPED_SPEAKING: 'STOPPED SPEAKING',
+		QUEUE_ADD: 'QUEUE_ADD',
+		HISTORY_ADD: 'HISTORY_ADD'
+	};
 
 	constructor(guildId: string) {
 		super();
@@ -23,7 +31,6 @@ export class MusicController extends AsyncEmitter {
 		this.isAutoplayOn = false;
 		this.guildId = guildId;
 	}
-
 
 	get isPlaying() {
 		return this._isPlaying && !!this.getVoiceConnection();
@@ -76,7 +83,6 @@ export class MusicController extends AsyncEmitter {
 		return this.queuer.clearQueue();
 	}
 
-	// Returns if a voice channel has actually been left
 	leaveVoiceChannel(): boolean {
 		const vc = this.getVoiceConnection();
 		if (!vc) {
@@ -111,21 +117,21 @@ export class MusicController extends AsyncEmitter {
 		}
 
 
-		this.runStream(encounteredSong);
+		await this.runStream(encounteredSong);
 		return encounteredSong;
 	}
 
-	runStream(song: Song) {
-		this.player = this.player.playSong(this.getVoiceConnection(), song.id)
-		.once(AudioPlayerStatus.Playing, (status) => {
+	async runStream(song: Song) {
+		this.player = await this.player.playSong(this.getVoiceConnection(), song.id);
+		this.player.once(AudioPlayerStatus.Playing, (status) => {
 			console.log(`--> Dispatcher started speaking: ${song.snippet.title} #${song.id}`);
 			this._isPlaying = true;
-			this.emit(MusicController.STARTED_SPEAKING);
+			this.emit(MusicController.EVENT.STARTED_SPEAKING, this.queuer.nowPlaying);
 		})
 		.once(AudioPlayerStatus.Idle, async (status) => {
 			console.log("--> Dispatcher ended.");
 			this._isPlaying = false;
-			this.emit(MusicController.STOPPED_SPEAKING);
+			this.emit(MusicController.EVENT.STOPPED_SPEAKING);
 			if (this.isAutoplayOn) {
 				await this.play();
 			}
